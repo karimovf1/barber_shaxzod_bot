@@ -7,18 +7,15 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 
-# Start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👋 Assalomu alaykum! Bu barber_shaxzod bot!")
+    await update.message.reply_text("👋 Assalomu alaykum! barber_shaxzod botiga xush kelibsiz.")
 
-# Asosiy bot funksiyasi
 def main():
     if not TOKEN:
-        print("❌ BOT_TOKEN topilmadi! Iltimos, .env faylni tekshiring.")
+        print("❌ BOT_TOKEN topilmadi!")
         return
 
     app = Application.builder().token(TOKEN).build()
-
     app.add_handler(CommandHandler("start", start))
 
     print("✅ Bot ishga tushdi!")

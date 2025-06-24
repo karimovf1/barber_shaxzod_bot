@@ -3,20 +3,23 @@ from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
-# .env dagi tokenni o‘qish
+# .env fayldan tokenni yuklash
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 
+# /start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👋 Assalomu alaykum! Bu barber_shaxzod bot!")
+    await update.message.reply_text("👋 Assalomu alaykum! barber_shaxzod botiga xush kelibsiz.")
 
+# Botni ishga tushurish funksiyasi
 def main():
     if not TOKEN:
-        print("❌ BOT_TOKEN topilmadi.")
+        print("❌ BOT_TOKEN topilmadi! .env faylni tekshiring.")
         return
 
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
+
     print("✅ Bot ishga tushdi!")
     app.run_polling()
 

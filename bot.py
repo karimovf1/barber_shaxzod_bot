@@ -24,6 +24,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=main_menu
     )
 
+services = [
+    "Soch olish", "Soqol olish", "Soqol to‘g‘irlash", "Okantovka qilish",
+    "Ukladka qilish", "Soch bo‘yash", "Soqol bo‘yash", "Yuzga maska qilish",
+    "Yuz chiskasi", "Kuyov sochi"
+]
+
+service_markup = ReplyKeyboardMarkup(
+    [[s] for s in services],
+    resize_keyboard=True,
+    one_time_keyboard=True
+)
+
+async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "📅 Iltimos, qaysi xizmatni tanlaysiz?",
+        reply_markup=service_markup
+    )
+
+
 # Har bir tugma funksiyasi
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📅 Navbat olish funksiyasi hali sozlanmoqda.")

@@ -51,16 +51,20 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=date_markup
         )
 
+# 📋 Xizmat turlari tugmasi bosilganda /book funksiyasini chaqirish
+tugma_nomi = "📋 Xizmat turlari"
+async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await book(update, context)
+
 # Botni ishga tushurish
 if __name__ == '__main__':
-   app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
-
+    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("book", book))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_date))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), book))
-
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^{tugma_nomi}$"), handle_services_button))
 
     app.run_polling()
+
 

@@ -24,6 +24,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=main_menu
     )
 
+
+# /book komandasi
 services = [
     "Soch olish", "Soqol olish", "Soqol to‘g‘irlash", "Okantovka qilish",
     "Ukladka qilish", "Soch bo‘yash", "Soqol bo‘yash", "Yuzga maska qilish",
@@ -41,6 +43,7 @@ async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📅 Iltimos, qaysi xizmatni tanlang:",
         reply_markup=service_markup
     )
+
 
 
 # Har bir tugma funksiyasi

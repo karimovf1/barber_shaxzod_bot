@@ -38,14 +38,12 @@ service_markup = ReplyKeyboardMarkup(
 
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "📅 Iltimos, qaysi xizmatni tanlaysiz?",
+        "📅 Iltimos, qaysi xizmatni tanlang:",
         reply_markup=service_markup
     )
 
 
 # Har bir tugma funksiyasi
-async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("📅 Navbat olish funksiyasi hali sozlanmoqda.")
 
 async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("👤 Shaxsiy kabinet funksiyasi hali sozlanmoqda.")

@@ -3,10 +3,11 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 import os
 from dotenv import load_dotenv
 
+# Tokenni yuklash
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 
-# Tugmalar menyusi
+# Asosiy menyu tugmalari
 main_menu = ReplyKeyboardMarkup(
     keyboard=[
         ["/book", "/cabinet"],
@@ -17,6 +18,20 @@ main_menu = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+# Xizmatlar ro‘yxati
+services = [
+    "Soch olish", "Soqol olish", "Soqol to‘g‘irlash", "Okantovka qilish",
+    "Ukladka qilish", "Soch bo‘yash", "Soqol bo‘yash", "Yuzga maska qilish",
+    "Yuz chiskasi", "Kuyov sochi"
+]
+
+# Xizmatlar tugmalari
+service_markup = ReplyKeyboardMarkup(
+    [[s] for s in services],
+    resize_keyboard=True,
+    one_time_keyboard=True
+)
+
 # /start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -24,65 +39,50 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=main_menu
     )
 
-
 # /book komandasi
-services = [
-    "Soch olish", "Soqol olish", "Soqol to‘g‘irlash", "Okantovka qilish",
-    "Ukladka qilish", "Soch bo‘yash", "Soqol bo‘yash", "Yuzga maska qilish",
-    "Yuz chiskasi", "Kuyov sochi"
-]
-
-service_markup = ReplyKeyboardMarkup(
-    [[s] for s in services],
-    resize_keyboard=True,
-    one_time_keyboard=True
-)
-
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "📅 Iltimos, qaysi xizmatni tanlang:",
         reply_markup=service_markup
     )
 
+# Xizmat tanlanganida ishlaydi
+async def service_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    service = update.message.text
+    if service in services:
+        await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\nTez orada bu xizmat uchun bandlov qismi qo‘shiladi.")
 
-
-# Har bir tugma funksiyasi
-
+# /cabinet komandasi
 async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("👤 Shaxsiy kabinet funksiyasi hali sozlanmoqda.")
 
+# /referal komandasi
 async def referal(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🔗 Sizning referal havolangiz: https://t.me/barber_shaxzod_bot?start=USERID")
+    user_id = update.effective_user.id
+    await update.message.reply_text(f"🔗 Sizning referal havolangiz:\nhttps://t.me/barber_shaxzod_bot?start={user_id}")
 
+# /cashback komandasi
 async def cashback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("💸 Sizda hozircha 0 so'm keshbek bor. Takliflar uchun keshbek tizimi ishlaydi.")
 
+# /instagram komandasi
 async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("📷 Instagram sahifamiz: https://www.instagram.com/barber_shaxzod")
+    await update.message.reply_text("📷 Instagram sahifamiz:\nhttps://www.instagram.com/barber_shaxzod")
 
+# /location komandasi
 async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📍 Manzilimiz: Toshkent shahri, Sergeli tumani, Barbershop Shaxzod")
 
+# /help komandasi
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("ℹ️ Yordam: Har bir tugma o‘ziga mos xizmatni bajaradi. Qo‘shimcha savollar bo‘lsa, admin bilan bog‘laning: @karimovf_1")
+    await update.message.reply_text("ℹ️ Yordam: Har bir tugma o‘ziga mos xizmatni bajaradi. Qo‘shimcha savollar bo‘lsa, admin: @karimovf_1")
 
-async def services(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    services_list = (
-        "💈 Xizmat turlari:\n"
-        "1. Soch olish\n"
-        "2. Soqol olish\n"
-        "3. Soqol to‘g‘irlash\n"
-        "4. Okantovka qilish\n"
-        "5. Ukladka qilish\n"
-        "6. Soch bo‘yash\n"
-        "7. Soqol bo‘yash\n"
-        "8. Yuzga maska qilish\n"
-        "9. Yuz chiskasi\n"
-        "10. Kuyov sochi"
-    )
-    await update.message.reply_text(services_list)
+# 📋 Xizmat turlari tugmasi
+async def services_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    services_text = "💈 Xizmat turlari:\n" + "\n".join([f"{i+1}. {s}" for i, s in enumerate(services)])
+    await update.message.reply_text(services_text)
 
-# Botni ishga tushirish
+# Botni ishga tushurish
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
 
@@ -94,6 +94,8 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("instagram", instagram))
     app.add_handler(CommandHandler("location", location))
     app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("📋 Xizmat turlari"), services))
+
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("📋 Xizmat turlari"), services_list))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, service_choice))
 
     app.run_polling()

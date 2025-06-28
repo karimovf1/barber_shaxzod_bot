@@ -38,21 +38,25 @@ async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Sanani tanlash
 async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    service = update.message.text
-    if service in services:
-        context.user_data["selected_service"] = service
+    text = update.message.text
+    selected_service = context.user_data.get("selected_service")
+
+    if text in services:
+        context.user_data["selected_service"] = text
 
         dates = get_next_dates()
+        context.user_data["available_dates"] = dates
         date_buttons = [[d] for d in dates]
         date_markup = ReplyKeyboardMarkup(date_buttons, resize_keyboard=True, one_time_keyboard=True)
 
         await update.message.reply_text(
-            f"✅ Siz tanladingiz: {service}\n\nEndi xizmat uchun kunni tanlang:",
+            f"✅ Siz tanladingiz: {text}\n\nEndi xizmat uchun kunni tanlang:",
             reply_markup=date_markup
         )
-    elif service in get_next_dates():
-        selected_service = context.user_data.get("selected_service", "Noma'lum")
-        selected_date = service
+
+    elif "available_dates" in context.user_data and text in context.user_data["available_dates"]:
+        selected_date = text
+        selected_service = selected_service or "Noma'lum"
         context.user_data["selected_date"] = selected_date
 
         await update.message.reply_text(
@@ -84,7 +88,6 @@ async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("book", book))
     app.add_handler(CommandHandler("cabinet", cabinet))
@@ -92,6 +95,7 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^{tugma_nomi}$"), handle_services_button))
 
     app.run_polling()
+
 
 
 

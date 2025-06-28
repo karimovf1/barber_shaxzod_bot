@@ -89,7 +89,7 @@ async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_T
 
 # Botni ishga tushurish
 if __name__ == '__main__':
-    app = ApplicationBuilder().token("TOKENNI_BU_YERGA_QO'YING").build()
+    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("book", book))

@@ -105,7 +105,7 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Bu vaqt allaqachon band. Iltimos, boshqa vaqt tanlang.")
         return
 
-    if user_id in user_bookings:
+    if user_id in user_bookings and not user_bookings[user_id].get("cancelled"):
         await update.message.reply_text("❌ Sizda mavjud bandlov bor. Avval bekor qiling yoki kuting.")
         return
 

@@ -95,6 +95,13 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
             time_buttons.append([label])
         await update.message.reply_text(f"📅 Sana tanlandi: {date}\n\n🕒 Iltimos, vaqtni tanlang:", reply_markup=ReplyKeyboardMarkup(time_buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
+async def schedule_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, delay: float, time_str: str):
+    await asyncio.sleep(delay)
+    await context.bot.send_message(
+        chat_id=update.effective_user.id,
+        text=f"⏰ Eslatma: Siz bugun soat {time_str} da soch olishga yozilgansiz. Iltimos, vaqtida yetib keling!"
+    )
+
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     time = update.message.text.replace(" ❌ Band", "")
     service = context.user_data.get("selected_service")
@@ -116,6 +123,14 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     today_str = datetime.now().strftime("%Y-%m-%d")
     user_booking_limits.setdefault(user_id, {})[today_str] = user_booking_limits.get(user_id, {}).get(today_str, 0) + 1
     user_cancel_limits.setdefault(user_id, {}).setdefault(today_str, 0)
+
+    # Eslatma rejalashtirish
+    booking_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+    remind_time = booking_datetime - timedelta(hours=1)
+    now = datetime.now()
+    if remind_time > now:
+        wait_seconds = (remind_time - now).total_seconds()
+        asyncio.create_task(schedule_reminder(update, context, wait_seconds, booking_datetime.strftime("%H:%M")))
 
     await update.message.reply_text(f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {service}\n📅 Sana: {date}\n🕒 Vaqt: {time}\n\nTez orada siz bilan bog‘lanamiz!", reply_markup=get_main_menu())
 

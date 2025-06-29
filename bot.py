@@ -115,7 +115,7 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_bookings[user_id] = {"service": service, "date": date, "time": time}
     today_str = datetime.now().strftime("%Y-%m-%d")
     user_booking_limits.setdefault(user_id, {})[today_str] = user_booking_limits.get(user_id, {}).get(today_str, 0) + 1
-    user_cancel_limits.setdefault(user_id, {})[today_str] = 0
+    user_cancel_limits.setdefault(user_id, {}).setdefault(today_str, 0)
 
     await update.message.reply_text(f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {service}\n📅 Sana: {date}\n🕒 Vaqt: {time}\n\nTez orada siz bilan bog‘lanamiz!", reply_markup=get_main_menu())
 

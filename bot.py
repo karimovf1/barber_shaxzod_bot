@@ -22,7 +22,7 @@ booked_slots = {}  # {user_id: {"last_change": datetime, "dates": {"2025-06-28":
 
 # /start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [["/book"], ["/cabinet"], ["/referal"], ["/cashback"], ["/instagram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]]
+    keyboard = [["/book"], ["/cabinet"], ["/cancel"], ["/referal"], ["/cashback"], ["/instagram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await update.message.reply_text(
         "Assalomu alaykum, 'Barber Shaxzod' botiga xush kelibsiz!\nQuyidagilardan birini tanlang 👇",
@@ -95,6 +95,29 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {selected_service}\n📅 Sana: {selected_date}\n🕒 Vaqt: {selected_time}\n\nTez orada siz bilan bog‘lanamiz!"
         )
 
+# Bandlovni bekor qilish
+async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    user_data = booked_slots.get(user_id)
+
+    if not user_data or not user_data.get("dates"):
+        await update.message.reply_text("Sizda bekor qilinadigan bandlov mavjud emas.")
+        return
+
+    cancelled_texts = []
+    for date, time in user_data["dates"].items():
+        global_day_slots = booked_slots.get("global", {}).get(date, [])
+        if time in global_day_slots:
+            global_day_slots.remove(time)
+        cancelled_texts.append(f"📅 {date} 🕒 {time}")
+
+    user_data["dates"] = {}
+    user_data["last_change"] = None
+
+    await update.message.reply_text(
+        "🚫 Quyidagi bandlov(lar) bekor qilindi:\n\n" + "\n".join(cancelled_texts)
+    )
+
 # 📋 Xizmat turlari tugmasi bosilganda
 async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await book(update, context)
@@ -125,14 +148,14 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("book", book))
     app.add_handler(CommandHandler("cabinet", cabinet))
+    app.add_handler(CommandHandler("cancel", cancel_booking))
 
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
 
-    app.run_polling()
-
+    app.run_poll
 
 
 

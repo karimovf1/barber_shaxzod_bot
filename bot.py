@@ -109,6 +109,11 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Sizda bekor qilinadigan bandlov mavjud emas.", reply_markup=get_main_menu())
         return
 
+    now = datetime.now()
+    if user_data["last_change"] and (now - user_data["last_change"]).total_seconds() < 86400:
+        await update.message.reply_text("Siz 24 soat ichida faqat bir marta bandlovni bekor qilishingiz mumkin. Iltimos, keyinroq urinib ko‘ring.", reply_markup=get_main_menu())
+        return
+
     cancelled_texts = []
     for date, time in user_data["dates"].items():
         global_day_slots = booked_slots.get("global", {}).get(date, [])
@@ -117,7 +122,7 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
         cancelled_texts.append(f"📅 {date} 🕒 {time}")
 
     user_data["dates"] = {}
-    user_data["last_change"] = None
+    user_data["last_change"] = now
 
     await update.message.reply_text(
         "🚫 Quyidagi bandlov(lar) bekor qilindi:\n\n" + "\n".join(cancelled_texts),
@@ -162,11 +167,3 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
 
     app.run_polling()
-
-
-
-
-
-
-
-

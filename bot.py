@@ -79,13 +79,16 @@ async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Botni ishga tushurish
 if __name__ == '__main__':
-    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
+    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()  
 
+    
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("book", book))
     app.add_handler(CommandHandler("cabinet", cabinet))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_date))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^{tugma_nomi}$"), handle_services_button))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
 
     app.run_polling()
 

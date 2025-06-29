@@ -20,18 +20,23 @@ times = [f"{hour:02d}:00" for hour in range(9, 22)]
 # Band qilingan vaqtlar (xotirada saqlanadi)
 booked_slots = {}  # {user_id: {"last_change": datetime, "dates": {"2025-06-28": "10:00"}}}
 
+# Asosiy menyu
+def get_main_menu():
+    return ReplyKeyboardMarkup(
+        [["/book"], ["/cabinet"], ["/cancel"], ["/referal"], ["/cashback"], ["/instagram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]],
+        resize_keyboard=True
+    )
+
 # /start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [["/book"], ["/cabinet"], ["/cancel"], ["/referal"], ["/cashback"], ["/instagram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await update.message.reply_text(
         "Assalomu alaykum, 'Barber Shaxzod' botiga xush kelibsiz!\nQuyidagilardan birini tanlang 👇",
-        reply_markup=reply_markup
+        reply_markup=get_main_menu()
     )
 
 # /book komandasi
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data.clear()  # Eski ma'lumotlarni tozalash
+    context.user_data.clear()
     service_buttons = [[s] for s in services]
     reply_markup = ReplyKeyboardMarkup(service_buttons, resize_keyboard=True, one_time_keyboard=True)
     await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=reply_markup)
@@ -71,10 +76,9 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     selected_service = context.user_data.get("selected_service", "Noma'lum")
     now = datetime.now()
 
-    # 24 soat cheklov
     user_data = booked_slots.setdefault(user_id, {"last_change": None, "dates": {}})
     if user_data["last_change"] and (now - user_data["last_change"]).total_seconds() < 86400:
-        await update.message.reply_text("Siz 24 soat ichida faqat bir marta bandlovni o'zgartirishingiz mumkin. Iltimos, keyinroq urinib ko‘ring.")
+        await update.message.reply_text("Siz 24 soat ichida faqat bir marta bandlovni o'zgartirishingiz mumkin. Iltimos, keyinroq urinib ko‘ring.", reply_markup=get_main_menu())
         return
 
     selected_time = selected_time_raw.split()[0]
@@ -84,7 +88,7 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         day_slots = global_slots.setdefault(selected_date, [])
 
         if selected_time in day_slots:
-            await update.message.reply_text("Kechirasiz, bu vaqt allaqachon band.")
+            await update.message.reply_text("Kechirasiz, bu vaqt allaqachon band.", reply_markup=get_main_menu())
             return
 
         day_slots.append(selected_time)
@@ -92,7 +96,8 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_data["last_change"] = now
 
         await update.message.reply_text(
-            f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {selected_service}\n📅 Sana: {selected_date}\n🕒 Vaqt: {selected_time}\n\nTez orada siz bilan bog‘lanamiz!"
+            f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {selected_service}\n📅 Sana: {selected_date}\n🕒 Vaqt: {selected_time}\n\nTez orada siz bilan bog‘lanamiz!",
+            reply_markup=get_main_menu()
         )
 
 # Bandlovni bekor qilish
@@ -101,7 +106,7 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_data = booked_slots.get(user_id)
 
     if not user_data or not user_data.get("dates"):
-        await update.message.reply_text("Sizda bekor qilinadigan bandlov mavjud emas.")
+        await update.message.reply_text("Sizda bekor qilinadigan bandlov mavjud emas.", reply_markup=get_main_menu())
         return
 
     cancelled_texts = []
@@ -115,7 +120,8 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_data["last_change"] = None
 
     await update.message.reply_text(
-        "🚫 Quyidagi bandlov(lar) bekor qilindi:\n\n" + "\n".join(cancelled_texts)
+        "🚫 Quyidagi bandlov(lar) bekor qilindi:\n\n" + "\n".join(cancelled_texts),
+        reply_markup=get_main_menu()
     )
 
 # 📋 Xizmat turlari tugmasi bosilganda
@@ -139,7 +145,7 @@ async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"💰 Keshbek: {cashback_amount}\n"
         f"👥 Taklif qilgan do‘stlaringiz: {referral_count} ta"
     )
-    await update.message.reply_text(text)
+    await update.message.reply_text(text, reply_markup=get_main_menu())
 
 # === BOTNI ISHGA TUSHIRISH ===
 if __name__ == '__main__':

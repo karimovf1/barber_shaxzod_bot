@@ -10,7 +10,6 @@ ADMIN_ID = 123456789  # <-- bu yerga admin Telegram ID qo'yiladi
 referrals_data = {}
 cashback_data = {}
 user_bookings = {}
-user_booking_limits = {}
 user_cancel_limits = {}
 
 # Xizmatlar ro'yxati
@@ -62,11 +61,6 @@ async def referal(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    if user_booking_limits.get(user_id, {}).get(today_str, 0) >= 2:
-        await update.message.reply_text("❌ Siz bugun ikki marta bandlov kiritgansiz. Iltimos, ertaga urinib ko‘ring.")
-        return
     context.user_data.clear()
     buttons = [[s] for s in services]
     await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
@@ -114,10 +108,6 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     busy.add(time)
     user_bookings[user_id] = {"service": service, "date": date, "time": time}
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    user_booking_limits.setdefault(user_id, {})[today_str] = user_booking_limits.get(user_id, {}).get(today_str, 0) + 1
-    if today_str not in user_cancel_limits.get(user_id, {}):
-        user_cancel_limits.setdefault(user_id, {})[today_str] = 0
 
     booking_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
     remind_time = booking_datetime - timedelta(hours=1)
@@ -140,9 +130,8 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     today_str = datetime.now().strftime("%Y-%m-%d")
     cancels_today = user_cancel_limits.get(user_id, {}).get(today_str, 0)
-    booking_count = user_booking_limits.get(user_id, {}).get(today_str, 0)
 
-    if cancels_today >= 1 or booking_count >= 2:
+    if cancels_today >= 1:
         await update.message.reply_text("❌ Siz bandlovni bekor qila olmaysiz.")
         return
 

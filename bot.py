@@ -105,12 +105,17 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Bu vaqt allaqachon band. Iltimos, boshqa vaqt tanlang.")
         return
 
-    if user_id in user_bookings and not user_bookings[user_id].get("cancelled"):
+    existing = user_bookings.get(user_id)
+    if existing and not existing.get("cancelled"):
         await update.message.reply_text("❌ Sizda mavjud bandlov bor. Avval bekor qiling yoki kuting.")
         return
 
     busy.add(time)
-    user_bookings[user_id] = {"service": service, "date": date, "time": time, "cancelled": False, "cancel_count": 0}
+    user_bookings[user_id] = {
+        "service": service, "date": date, "time": time,
+        "cancelled": False, "cancel_count": existing.get("cancel_count", 0) if existing else 0,
+        "last_cancel": existing.get("last_cancel") if existing else None
+    }
 
     booking_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
     remind_time = booking_datetime - timedelta(hours=1)
@@ -124,7 +129,7 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     booking = user_bookings.get(user_id)
-    booking_info = f"📋 {booking['service']}\n📅 {booking['date']}\n🕒 {booking['time']}" if booking else "Bandlov mavjud emas."
+    booking_info = f"📋 {booking['service']}\n📅 {booking['date']}\n🕒 {booking['time']}" if booking and not booking.get("cancelled") else "Bandlov mavjud emas."
     cashback = cashback_data.get(str(user_id), 0)
     invites = len(referrals_data.get(str(user_id), []))
     await update.message.reply_text(f"👤 Shaxsiy kabinet:\n\n{booking_info}\n💰 Cashback: {cashback} so'm\n👥 Taklif qilganlar: {invites} ta")
@@ -133,13 +138,16 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     booking = user_bookings.get(user_id)
     if booking:
+        last_cancel = booking.get("last_cancel")
         if booking.get("cancel_count", 0) >= 1:
-            await update.message.reply_text("❌ Siz faqat 1 marta bandlovni bekor qilishingiz mumkin.")
-            return
+            if last_cancel and (datetime.now() - last_cancel) < timedelta(hours=24):
+                await update.message.reply_text("❌ Siz faqat 1 marta bandlovni bekor qilishingiz mumkin (24 soatda bir marta).")
+                return
 
         booked_slots[booking['date']][booking['service']].discard(booking['time'])
         booking["cancelled"] = True
         booking["cancel_count"] = 1
+        booking["last_cancel"] = datetime.now()
         await update.message.reply_text("✅ Bandlov bekor qilindi.", reply_markup=get_main_menu())
     else:
         await update.message.reply_text("Sizda bandlov mavjud emas.")

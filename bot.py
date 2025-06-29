@@ -13,6 +13,7 @@ cashback_data = {}
 # Bandlovlar tarixi va cheklovlar
 user_bookings = {}
 user_booking_limits = {}
+user_cancel_limits = {}
 
 # Xizmatlar ro'yxati
 services = [
@@ -114,6 +115,7 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_bookings[user_id] = {"service": service, "date": date, "time": time}
     today_str = datetime.now().strftime("%Y-%m-%d")
     user_booking_limits.setdefault(user_id, {})[today_str] = user_booking_limits.get(user_id, {}).get(today_str, 0) + 1
+    user_cancel_limits.setdefault(user_id, {})[today_str] = 0
 
     await update.message.reply_text(f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {service}\n📅 Sana: {date}\n🕒 Vaqt: {time}\n\nTez orada siz bilan bog‘lanamiz!", reply_markup=get_main_menu())
 
@@ -127,10 +129,18 @@ async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    cancels_today = user_cancel_limits.get(user_id, {}).get(today_str, 0)
+
+    if cancels_today >= 1:
+        await update.message.reply_text("❌ Siz bugun faqat 1 marta bandlovni bekor qilishingiz mumkin.")
+        return
+
     booking = user_bookings.get(user_id)
     if booking:
         booked_slots[booking['date']][booking['service']].discard(booking['time'])
         del user_bookings[user_id]
+        user_cancel_limits.setdefault(user_id, {})[today_str] = cancels_today + 1
         await update.message.reply_text("✅ Bandlovingiz bekor qilindi.", reply_markup=get_main_menu())
     else:
         await update.message.reply_text("Sizda mavjud bandlov topilmadi.")

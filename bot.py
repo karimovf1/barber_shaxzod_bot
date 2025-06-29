@@ -28,7 +28,6 @@ times = [f"{hour:02d}:00" for hour in range(9, 22)]
 booked_slots = {}
 
 # Menyu
-
 def get_main_menu():
     return ReplyKeyboardMarkup(
         [["/book"], ["/cabinet"], ["/cancel"], ["/admin"], ["/referal"], ["/cashback"], ["/instagram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]],
@@ -104,6 +103,11 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     busy = booked_slots.setdefault(date, {}).setdefault(service, set())
     if time in busy:
         await update.message.reply_text("❌ Bu vaqt allaqachon band. Iltimos, boshqa vaqt tanlang.")
+        return
+
+    # Agar foydalanuvchida bandlov mavjud bo‘lsa, boshqa vaqtga o‘zgartira olmaydi
+    if user_id in user_bookings:
+        await update.message.reply_text("❌ Sizda mavjud bandlov bor. Avval bekor qiling yoki kuting.")
         return
 
     busy.add(time)

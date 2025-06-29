@@ -15,7 +15,10 @@ def get_next_dates(num_days=7):
     return [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(num_days)]
 
 # Vaqtlar ro'yxati
-times = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"]
+times = ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00"]
+
+# Band qilingan vaqtlar (xotirada saqlanadi)
+booked_slots = {}  # {"2025-06-28": ["10:00", "13:00"]}
 
 # /start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -47,16 +50,27 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     selected_date = update.message.text
     if selected_date in get_next_dates():
         context.user_data["selected_date"] = selected_date
-        time_buttons = [[t] for t in times]
+        # Bo'sh vaqtlar ro'yxatini tayyorlash
+        busy_times = booked_slots.get(selected_date, [])
+        available_times = [t for t in times if t not in busy_times]
+        if not available_times:
+            await update.message.reply_text("Kechirasiz, bu sana uchun barcha vaqtlar band.")
+            return
+        time_buttons = [[t] for t in available_times]
         reply_markup = ReplyKeyboardMarkup(time_buttons, resize_keyboard=True, one_time_keyboard=True)
         await update.message.reply_text(f"📅 Sana tanlandi: {selected_date}\n\nEndi vaqtni tanlang:", reply_markup=reply_markup)
 
 # Vaqt tanlash
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     selected_time = update.message.text
-    if selected_time in times:
+    selected_date = context.user_data.get("selected_date")
+    if selected_date and selected_time in times:
+        if selected_time in booked_slots.get(selected_date, []):
+            await update.message.reply_text("Kechirasiz, bu vaqt allaqachon band.")
+            return
+
+        booked_slots.setdefault(selected_date, []).append(selected_time)
         selected_service = context.user_data.get("selected_service", "Noma'lum")
-        selected_date = context.user_data.get("selected_date", "Noma'lum")
         await update.message.reply_text(
             f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {selected_service}\n📅 Sana: {selected_date}\n🕒 Vaqt: {selected_time}\n\nTez orada siz bilan bog‘lanamiz!"
         )
@@ -93,6 +107,7 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
 
     app.run_polling()
+
 
 
 

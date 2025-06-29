@@ -27,6 +27,10 @@ def get_main_menu():
         resize_keyboard=True
     )
 
+# Orqaga (Назад) tugmasi
+def get_back_button():
+    return ReplyKeyboardMarkup([["🔙 Orqaga / Назад"]], resize_keyboard=True, one_time_keyboard=True)
+
 # /start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -37,24 +41,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # /book komandasi
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
-    service_buttons = [[s] for s in services]
+    service_buttons = [[s] for s in services] + [["🔙 Orqaga / Назад"]]
     reply_markup = ReplyKeyboardMarkup(service_buttons, resize_keyboard=True, one_time_keyboard=True)
     await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=reply_markup)
 
 # Xizmat tanlash
 async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
     service = update.message.text
+    if service == "🔙 Orqaga / Назад":
+        await start(update, context)
+        return
     if service in services:
         context.user_data.clear()
         context.user_data["selected_service"] = service
         dates = get_next_dates()
-        date_buttons = [[d] for d in dates]
+        date_buttons = [[d] for d in dates] + [["🔙 Orqaga / Назад"]]
         reply_markup = ReplyKeyboardMarkup(date_buttons, resize_keyboard=True, one_time_keyboard=True)
         await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\nEndi xizmat uchun kunni tanlang:", reply_markup=reply_markup)
 
 # Sana tanlash
 async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     selected_date = update.message.text
+    if selected_date == "🔙 Orqaga / Назад":
+        await book(update, context)
+        return
     if selected_date in get_next_dates():
         context.user_data["selected_date"] = selected_date
         selected_service = context.user_data.get("selected_service")
@@ -66,6 +76,7 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 time_buttons.append([f"{t} ❌ Band / Занято"])
             else:
                 time_buttons.append([t])
+        time_buttons.append(["🔙 Orqaga / Назад"])
         reply_markup = ReplyKeyboardMarkup(time_buttons, resize_keyboard=True, one_time_keyboard=True)
         await update.message.reply_text(f"📅 Sana tanlandi: {selected_date}\n\nEndi vaqtni tanlang:", reply_markup=reply_markup)
 
@@ -73,6 +84,10 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     selected_time_raw = update.message.text
+    if selected_time_raw == "🔙 Orqaga / Назад":
+        await choose_date(update, context)
+        return
+
     selected_date = context.user_data.get("selected_date")
     selected_service = context.user_data.get("selected_service", "Noma'lum")
     now = datetime.now()
@@ -175,6 +190,7 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), start))
 
     app.run_polling()
 

@@ -18,7 +18,7 @@ def get_next_dates(num_days=7):
 times = [f"{hour:02d}:00" for hour in range(9, 22)]
 
 # Band qilingan vaqtlar (xotirada saqlanadi)
-booked_slots = {}  # {user_id: {"last_change": datetime, "dates": {"2025-06-28": "10:00"}}}
+booked_slots = {}  # {user_id: {"last_change": datetime, "dates": {}, "actions": {"booked": 0, "cancelled": 0}}}
 
 # Asosiy menyu
 def get_main_menu():
@@ -76,9 +76,9 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     selected_service = context.user_data.get("selected_service", "Noma'lum")
     now = datetime.now()
 
-    user_data = booked_slots.setdefault(user_id, {"last_change": None, "dates": {}})
-    if user_data["last_change"] and (now - user_data["last_change"]).total_seconds() < 86400:
-        await update.message.reply_text("Siz 24 soat ichida faqat bir marta bandlovni o'zgartirishingiz mumkin. Iltimos, keyinroq urinib ko‘ring.", reply_markup=get_main_menu())
+    user_data = booked_slots.setdefault(user_id, {"last_change": None, "dates": {}, "actions": {"booked": 0, "cancelled": 0}})
+    if user_data["actions"]["booked"] >= 1:
+        await update.message.reply_text("Siz faqat 1 marta bandlov kiritishingiz mumkin. Iltimos, keyinroq urinib ko‘ring.", reply_markup=get_main_menu())
         return
 
     selected_time = selected_time_raw.split()[0]
@@ -94,6 +94,7 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         day_slots.append(selected_time)
         user_data["dates"][selected_date] = selected_time
         user_data["last_change"] = now
+        user_data["actions"]["booked"] += 1
 
         await update.message.reply_text(
             f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {selected_service}\n📅 Sana: {selected_date}\n🕒 Vaqt: {selected_time}\n\nTez orada siz bilan bog‘lanamiz!",
@@ -109,9 +110,8 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Sizda bekor qilinadigan bandlov mavjud emas.", reply_markup=get_main_menu())
         return
 
-    now = datetime.now()
-    if user_data["last_change"] and (now - user_data["last_change"]).total_seconds() < 86400:
-        await update.message.reply_text("Siz 24 soat ichida faqat bir marta bandlovni bekor qilishingiz mumkin. Iltimos, keyinroq urinib ko‘ring.", reply_markup=get_main_menu())
+    if user_data["actions"]["cancelled"] >= 1:
+        await update.message.reply_text("Siz 24 soat ichida faqat 1 marta bekor qilishingiz mumkin.", reply_markup=get_main_menu())
         return
 
     cancelled_texts = []
@@ -122,7 +122,8 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
         cancelled_texts.append(f"📅 {date} 🕒 {time}")
 
     user_data["dates"] = {}
-    user_data["last_change"] = now
+    user_data["actions"]["cancelled"] += 1
+    user_data["last_change"] = datetime.now()
 
     await update.message.reply_text(
         "🚫 Quyidagi bandlov(lar) bekor qilindi:\n\n" + "\n".join(cancelled_texts),
@@ -167,3 +168,4 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
 
     app.run_polling()
+

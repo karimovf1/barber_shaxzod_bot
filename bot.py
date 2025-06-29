@@ -18,7 +18,7 @@ def get_next_dates(num_days=7):
 times = [f"{hour:02d}:00" for hour in range(9, 22)]
 
 # Band qilingan vaqtlar (xotirada saqlanadi)
-booked_slots = {}  # {"2025-06-28": ["10:00", "13:00"]}
+booked_slots = {}  # {user_id: {"last_change": datetime, "dates": {"2025-06-28": ["10:00", ...]}}}
 
 # /start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -62,19 +62,34 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Vaqt tanlash
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
     selected_time_raw = update.message.text
     selected_date = context.user_data.get("selected_date")
+    selected_service = context.user_data.get("selected_service", "Noma'lum")
+    now = datetime.now()
+
+    # 24 soat cheklov
+    user_data = booked_slots.setdefault(user_id, {"last_change": None, "dates": {}})
+    if user_data["last_change"] and (now - user_data["last_change"]).total_seconds() < 86400:
+        await update.message.reply_text("Siz 24 soat ichida faqat bir marta bandlovni o'zgartirishingiz mumkin. Iltimos, keyinroq urinib ko‘ring.")
+        return
 
     # Faqat vaqtni ajratib olish
     selected_time = selected_time_raw.split()[0]
 
     if selected_date and selected_time in times:
-        if selected_time in booked_slots.get(selected_date, []):
+        global_slots = booked_slots.setdefault("global", {})
+        day_slots = global_slots.setdefault(selected_date, [])
+
+        if selected_time in day_slots:
             await update.message.reply_text("Kechirasiz, bu vaqt allaqachon band.")
             return
 
-        booked_slots.setdefault(selected_date, []).append(selected_time)
-        selected_service = context.user_data.get("selected_service", "Noma'lum")
+        # Band qilish
+        day_slots.append(selected_time)
+        user_data["dates"][selected_date] = selected_time
+        user_data["last_change"] = now
+
         await update.message.reply_text(
             f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {selected_service}\n📅 Sana: {selected_date}\n🕒 Vaqt: {selected_time}\n\nTez orada siz bilan bog‘lanamiz!"
         )
@@ -86,7 +101,12 @@ async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_T
 # /cabinet komandasi
 async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    booking_history = "Hozircha hech qanday bandlov mavjud emas."
+    user_data = booked_slots.get(user_id, {})
+    booking_info = user_data.get("dates", {})
+    if not booking_info:
+        booking_history = "Hozircha hech qanday bandlov mavjud emas."
+    else:
+        booking_history = "\n".join([f"{date} - {time}" for date, time in booking_info.items()])
     cashback_amount = "0 so'm"
     referral_count = 0
     text = (

@@ -2,6 +2,8 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 from datetime import datetime, timedelta
 import asyncio
+import csv
+import os
 
 # Admin ID
 ADMIN_ID = 123456789  # <-- bu yerga admin Telegram ID qo'yiladi
@@ -26,6 +28,15 @@ def get_next_dates(num_days=7):
 # Vaqtlar (09:00-21:00)
 times = [f"{hour:02d}:00" for hour in range(9, 22)]
 booked_slots = {}
+
+# CSV ga bandlov saqlash
+def save_booking_to_csv(user_id, service, date, time):
+    file_exists = os.path.isfile("bookings.csv")
+    with open("bookings.csv", mode="a", newline='', encoding="utf-8") as file:
+        writer = csv.writer(file)
+        if not file_exists:
+            writer.writerow(["user_id", "service", "date", "time", "timestamp"])
+        writer.writerow([user_id, service, date, time, datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
 
 # Menyu
 def get_main_menu():
@@ -116,6 +127,9 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "cancelled": False, "cancel_count": existing.get("cancel_count", 0) if existing else 0,
         "last_cancel": existing.get("last_cancel") if existing else None
     }
+
+    # CSV ga saqlash
+    save_booking_to_csv(user_id, service, date, time)
 
     booking_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
     remind_time = booking_datetime - timedelta(hours=1)

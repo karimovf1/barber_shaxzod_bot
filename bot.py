@@ -45,7 +45,8 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if selected_date in get_next_dates():
         selected_service = context.user_data.get("selected_service", "Noma'lum")
         await update.message.reply_text(
-            f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {selected_service}\n📅 Sana: {selected_date}\n🕒 Vaqt: 12:00\n\nTez orada siz bilan bog‘lanamiz!"
+            f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {selected_service}\n📅 Sana: {selected_date}\n🕒 Vaqt:["10:00", "11:00", "12:00", "13:00", "14:00", "15:00"]
+\n\nTez orada siz bilan bog‘lanamiz!"
         )
 
 # 📋 Xizmat turlari tugmasi bosilganda

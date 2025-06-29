@@ -105,13 +105,12 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Bu vaqt allaqachon band. Iltimos, boshqa vaqt tanlang.")
         return
 
-    # Agar foydalanuvchida bandlov mavjud bo‘lsa, boshqa vaqtga o‘zgartira olmaydi
     if user_id in user_bookings:
         await update.message.reply_text("❌ Sizda mavjud bandlov bor. Avval bekor qiling yoki kuting.")
         return
 
     busy.add(time)
-    user_bookings[user_id] = {"service": service, "date": date, "time": time}
+    user_bookings[user_id] = {"service": service, "date": date, "time": time, "cancelled": False}
 
     booking_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
     remind_time = booking_datetime - timedelta(hours=1)
@@ -132,18 +131,14 @@ async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    cancels_today = user_cancel_limits.get(user_id, {}).get(today_str, 0)
-
-    if cancels_today >= 1:
-        await update.message.reply_text("❌ Siz bandlovni bekor qila olmaysiz.")
-        return
-
     booking = user_bookings.get(user_id)
     if booking:
+        if booking.get("cancelled"):
+            await update.message.reply_text("❌ Siz bandlovni faqat 1 marta bekor qilishingiz mumkin.")
+            return
+
         booked_slots[booking['date']][booking['service']].discard(booking['time'])
-        del user_bookings[user_id]
-        user_cancel_limits.setdefault(user_id, {})[today_str] = cancels_today + 1
+        booking["cancelled"] = True
         await update.message.reply_text("✅ Bandlov bekor qilindi.", reply_markup=get_main_menu())
     else:
         await update.message.reply_text("Sizda bandlov mavjud emas.")

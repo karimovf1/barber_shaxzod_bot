@@ -15,7 +15,7 @@ def get_next_dates(num_days=7):
     return [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(num_days)]
 
 # Vaqtlar ro'yxati
-times = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"]
+times = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"]
 
 # /start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -3,14 +3,12 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 from datetime import datetime, timedelta
 import asyncio
 
-# Admin ID (o'zgartiring o'zingizga moslashtirib)
+# Admin ID
 ADMIN_ID = 123456789  # <-- bu yerga admin Telegram ID qo'yiladi
 
-# Referrallar ma'lumotlari
+# Referrallar, cashback, bandlovlar
 referrals_data = {}
 cashback_data = {}
-
-# Bandlovlar tarixi va cheklovlar
 user_bookings = {}
 user_booking_limits = {}
 user_cancel_limits = {}
@@ -22,27 +20,24 @@ services = [
     "Yuz chiskasi", "Kuyov soch"
 ]
 
-# Sana generatori (7 kunlik)
 def get_next_dates(num_days=7):
     today = datetime.now()
     return [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(num_days)]
 
-# Vaqtlar ro'yxati (09:00 - 21:00)
+# Vaqtlar (09:00-21:00)
 times = [f"{hour:02d}:00" for hour in range(9, 22)]
-
-# Band qilingan vaqtlar
 booked_slots = {}
 
-# Asosiy menyu
+# Menyu
+
 def get_main_menu():
     return ReplyKeyboardMarkup(
         [["/book"], ["/cabinet"], ["/cancel"], ["/admin"], ["/referal"], ["/cashback"], ["/instagram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]],
         resize_keyboard=True
     )
 
-# Orqaga (Назад) tugmasi
 def get_back_button():
-    return ReplyKeyboardMarkup([["🔙 Orqaga / Назад"]], resize_keyboard=True, one_time_keyboard=True)
+    return ReplyKeyboardMarkup([ ["🔙 Orqaga / Назад"] ], resize_keyboard=True, one_time_keyboard=True)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
@@ -99,7 +94,7 @@ async def schedule_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     await asyncio.sleep(delay)
     await context.bot.send_message(
         chat_id=update.effective_user.id,
-        text=f"⏰ Eslatma: Siz bugun soat {time_str} da soch olishga yozilgansiz. Iltimos, vaqtida yetib keling!"
+        text=f"⏰ Eslatma: Siz bugun soat {time_str} da bandlovingiz bor. Iltimos, vaqtida yetib keling!"
     )
 
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -114,17 +109,15 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     busy = booked_slots.setdefault(date, {}).setdefault(service, set())
     if time in busy:
-        await update.message.reply_text("❌ Bu vaqt allaqachon band qilingan. Iltimos, boshqa vaqt tanlang.")
+        await update.message.reply_text("❌ Bu vaqt allaqachon band. Iltimos, boshqa vaqt tanlang.")
         return
 
-    # Bandlovni saqlash
     busy.add(time)
     user_bookings[user_id] = {"service": service, "date": date, "time": time}
     today_str = datetime.now().strftime("%Y-%m-%d")
     user_booking_limits.setdefault(user_id, {})[today_str] = user_booking_limits.get(user_id, {}).get(today_str, 0) + 1
-    user_cancel_limits.setdefault(user_id, {}).setdefault(today_str, 0)
+    user_cancel_limits.setdefault(user_id, {})[today_str] = 0
 
-    # Eslatma rejalashtirish
     booking_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
     remind_time = booking_datetime - timedelta(hours=1)
     now = datetime.now()
@@ -132,15 +125,15 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         wait_seconds = (remind_time - now).total_seconds()
         asyncio.create_task(schedule_reminder(update, context, wait_seconds, booking_datetime.strftime("%H:%M")))
 
-    await update.message.reply_text(f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {service}\n📅 Sana: {date}\n🕒 Vaqt: {time}\n\nTez orada siz bilan bog‘lanamiz!", reply_markup=get_main_menu())
+    await update.message.reply_text(f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {service}\n📅 Sana: {date}\n🕒 Vaqt: {time}", reply_markup=get_main_menu())
 
 async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     booking = user_bookings.get(user_id)
-    booking_info = f"📋 {booking['service']}\n📅 {booking['date']}\n🕒 {booking['time']}" if booking else "Hozircha bandlov mavjud emas."
+    booking_info = f"📋 {booking['service']}\n📅 {booking['date']}\n🕒 {booking['time']}" if booking else "Bandlov mavjud emas."
     cashback = cashback_data.get(str(user_id), 0)
     invites = len(referrals_data.get(str(user_id), []))
-    await update.message.reply_text(f"👤 Shaxsiy kabinet:\n\n📅 Bandlov: {booking_info}\n💰 Cashback: {cashback} so'm\n👥 Taklif qilganlar soni: {invites} ta")
+    await update.message.reply_text(f"👤 Shaxsiy kabinet:\n\n{booking_info}\n💰 Cashback: {cashback} so'm\n👥 Taklif qilganlar: {invites} ta")
 
 async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -156,15 +149,15 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
         booked_slots[booking['date']][booking['service']].discard(booking['time'])
         del user_bookings[user_id]
         user_cancel_limits.setdefault(user_id, {})[today_str] = cancels_today + 1
-        await update.message.reply_text("✅ Bandlovingiz bekor qilindi.", reply_markup=get_main_menu())
+        await update.message.reply_text("✅ Bandlov bekor qilindi.", reply_markup=get_main_menu())
     else:
-        await update.message.reply_text("Sizda mavjud bandlov topilmadi.")
+        await update.message.reply_text("Sizda bandlov mavjud emas.")
 
 async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         await update.message.reply_text("Siz admin emassiz.")
         return
-    stats = f"👥 Jami foydalanuvchilar: {len(user_bookings)}\n📅 Jami bandlovlar: {sum(len(v) for v in booked_slots.values())}"
+    stats = f"👥 Foydalanuvchilar: {len(user_bookings)}\n📅 Bandlovlar: {sum(len(v) for v in booked_slots.values())}"
     await update.message.reply_text(f"🔧 Admin panel:\n{stats}")
 
 async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_TYPE):

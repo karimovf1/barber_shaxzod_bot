@@ -134,7 +134,69 @@ async def schedule_reminder(context, user_id, service, date, time, delay):
     except Exception as e:
         print(f"Eslatma yuborishda xatolik: {e}")
 
-# (Qolgan funksiyalar o'zgartirilmagan holda qoladi)
+async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await book(update, context)
+
+async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    user_data = booked_slots.get(user_id, {})
+    services_info = user_data.get("services", {})
+    cashback = "0 so'm"
+    referrals = 0
+
+    if not services_info:
+        text = "📋 Sizda hali hech qanday bandlov mavjud emas."
+    else:
+        rows = []
+        for service, info in services_info.items():
+            for date, time in info.get("dates", {}).items():
+                rows.append(f"• {service} - {date} {time}")
+        text = "📋 Sizning bandlovlaringiz:\n" + "\n".join(rows)
+
+    await update.message.reply_text(
+        f"👤 Shaxsiy kabinet\n\n{text}\n\n💰 Keshbek: {cashback}\n👥 Taklif qilgan do‘stlaringiz: {referrals} ta"
+    )
+
+async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    user_data = booked_slots.get(user_id)
+    if not user_data:
+        await update.message.reply_text("❗ Sizda hech qanday bandlov mavjud emas.")
+        return
+
+    if user_data["actions"].get("cancelled", 0) >= 1:
+        await update.message.reply_text("❌ Siz bandlovni faqat 1 marta bekor qilishingiz mumkin.")
+        return
+
+    service_data = user_data.get("services", {})
+    if not service_data:
+        await update.message.reply_text("❗ Bekor qilinadigan bandlov topilmadi.")
+        return
+
+    for service, info in service_data.items():
+        for date, time in info.get("dates", {}).items():
+            booked_time_list = booked_slots["global"][service][date]
+            if time in booked_time_list:
+                booked_time_list.remove(time)
+    user_data["services"].clear()
+    user_data["actions"]["cancelled"] += 1
+
+    await update.message.reply_text("✅ Bandlovingiz bekor qilindi.", reply_markup=get_main_menu())
+
+async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID:
+        await update.message.reply_text("⛔ Sizda admin panelga kirish huquqi yo‘q.")
+        return
+
+    total_users = len([uid for uid in booked_slots.keys() if isinstance(uid, int)])
+    total_bookings = sum(
+        len(info.get("dates", {})) for u in booked_slots.values() if isinstance(u, dict)
+        for info in u.get("services", {}).values()
+    )
+
+    await update.message.reply_text(
+        f"👨‍💼 Admin Panel:\n\n👥 Foydalanuvchilar soni: {total_users}\n📅 Umumiy bandlovlar: {total_bookings}"
+    )
 
 if __name__ == '__main__':
     app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()

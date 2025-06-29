@@ -14,8 +14,8 @@ def get_next_dates(num_days=7):
     today = datetime.now()
     return [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(num_days)]
 
-# Vaqtlar ro'yxati
-times = ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00"]
+# Vaqtlar ro'yxati (09:00 - 21:00)
+times = [f"{hour:02d}:00" for hour in range(9, 22)]
 
 # Band qilingan vaqtlar (xotirada saqlanadi)
 booked_slots = {}  # {"2025-06-28": ["10:00", "13:00"]}
@@ -50,20 +50,24 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     selected_date = update.message.text
     if selected_date in get_next_dates():
         context.user_data["selected_date"] = selected_date
-        # Bo'sh vaqtlar ro'yxatini tayyorlash
         busy_times = booked_slots.get(selected_date, [])
-        available_times = [t for t in times if t not in busy_times]
-        if not available_times:
-            await update.message.reply_text("Kechirasiz, bu sana uchun barcha vaqtlar band.")
-            return
-        time_buttons = [[t] for t in available_times]
+        time_buttons = []
+        for t in times:
+            if t in busy_times:
+                time_buttons.append([f"{t} ❌ Band / Занято"])
+            else:
+                time_buttons.append([t])
         reply_markup = ReplyKeyboardMarkup(time_buttons, resize_keyboard=True, one_time_keyboard=True)
         await update.message.reply_text(f"📅 Sana tanlandi: {selected_date}\n\nEndi vaqtni tanlang:", reply_markup=reply_markup)
 
 # Vaqt tanlash
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    selected_time = update.message.text
+    selected_time_raw = update.message.text
     selected_date = context.user_data.get("selected_date")
+
+    # Faqat vaqtni ajratib olish
+    selected_time = selected_time_raw.split()[0]
+
     if selected_date and selected_time in times:
         if selected_time in booked_slots.get(selected_date, []):
             await update.message.reply_text("Kechirasiz, bu vaqt allaqachon band.")
@@ -103,10 +107,11 @@ if __name__ == '__main__':
 
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(times)})$"), choose_time))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
 
     app.run_polling()
+
 
 
 

@@ -116,7 +116,8 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_bookings[user_id] = {"service": service, "date": date, "time": time}
     today_str = datetime.now().strftime("%Y-%m-%d")
     user_booking_limits.setdefault(user_id, {})[today_str] = user_booking_limits.get(user_id, {}).get(today_str, 0) + 1
-    user_cancel_limits.setdefault(user_id, {})[today_str] = 0
+    if today_str not in user_cancel_limits.get(user_id, {}):
+        user_cancel_limits.setdefault(user_id, {})[today_str] = 0
 
     booking_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
     remind_time = booking_datetime - timedelta(hours=1)

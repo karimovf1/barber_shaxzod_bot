@@ -18,7 +18,7 @@ def get_next_dates(num_days=7):
 times = [f"{hour:02d}:00" for hour in range(9, 22)]
 
 # Band qilingan vaqtlar (xotirada saqlanadi)
-booked_slots = {}  # {user_id: {"last_change": datetime, "dates": {"2025-06-28": ["10:00", ...]}}}
+booked_slots = {}  # {user_id: {"last_change": datetime, "dates": {"2025-06-28": "10:00"}}}
 
 # /start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -31,6 +31,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # /book komandasi
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()  # Eski ma'lumotlarni tozalash
     service_buttons = [[s] for s in services]
     reply_markup = ReplyKeyboardMarkup(service_buttons, resize_keyboard=True, one_time_keyboard=True)
     await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=reply_markup)
@@ -39,6 +40,7 @@ async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
     service = update.message.text
     if service in services:
+        context.user_data.clear()
         context.user_data["selected_service"] = service
         dates = get_next_dates()
         date_buttons = [[d] for d in dates]
@@ -50,7 +52,8 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     selected_date = update.message.text
     if selected_date in get_next_dates():
         context.user_data["selected_date"] = selected_date
-        busy_times = booked_slots.get(selected_date, [])
+        global_slots = booked_slots.setdefault("global", {})
+        busy_times = global_slots.get(selected_date, [])
         time_buttons = []
         for t in times:
             if t in busy_times:
@@ -74,7 +77,6 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Siz 24 soat ichida faqat bir marta bandlovni o'zgartirishingiz mumkin. Iltimos, keyinroq urinib ko‘ring.")
         return
 
-    # Faqat vaqtni ajratib olish
     selected_time = selected_time_raw.split()[0]
 
     if selected_date and selected_time in times:
@@ -85,7 +87,6 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Kechirasiz, bu vaqt allaqachon band.")
             return
 
-        # Band qilish
         day_slots.append(selected_time)
         user_data["dates"][selected_date] = selected_time
         user_data["last_change"] = now
@@ -131,6 +132,7 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
 
     app.run_polling()
+
 
 
 

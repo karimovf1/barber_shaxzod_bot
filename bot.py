@@ -14,6 +14,9 @@ def get_next_dates(num_days=7):
     today = datetime.now()
     return [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(num_days)]
 
+# Vaqtlar ro'yxati
+times = ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00"]
+
 # /start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [["/book"], ["/cabinet"], ["/referal"], ["/cashback"], ["/instagram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]]
@@ -43,10 +46,19 @@ async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     selected_date = update.message.text
     if selected_date in get_next_dates():
+        context.user_data["selected_date"] = selected_date
+        time_buttons = [[t] for t in times]
+        reply_markup = ReplyKeyboardMarkup(time_buttons, resize_keyboard=True, one_time_keyboard=True)
+        await update.message.reply_text(f"📅 Sana tanlandi: {selected_date}\n\nEndi vaqtni tanlang:", reply_markup=reply_markup)
+
+# Vaqt tanlash
+async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    selected_time = update.message.text
+    if selected_time in times:
         selected_service = context.user_data.get("selected_service", "Noma'lum")
+        selected_date = context.user_data.get("selected_date", "Noma'lum")
         await update.message.reply_text(
-            f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {selected_service}\n📅 Sana: {selected_date}\n🕒 Vaqt:["10:00", "11:00", "12:00", "13:00", "14:00", "15:00"]
-\n\nTez orada siz bilan bog‘lanamiz!"
+            f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {selected_service}\n📅 Sana: {selected_date}\n🕒 Vaqt: {selected_time}\n\nTez orada siz bilan bog‘lanamiz!"
         )
 
 # 📋 Xizmat turlari tugmasi bosilganda
@@ -77,9 +89,11 @@ if __name__ == '__main__':
 
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(times)})$"), choose_time))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
 
     app.run_polling()
+
 
 
 

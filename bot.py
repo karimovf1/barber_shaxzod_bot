@@ -41,7 +41,7 @@ def save_booking_to_csv(user_id, service, date, time):
 # Menyu
 def get_main_menu():
     return ReplyKeyboardMarkup(
-        [["/book"], ["/cabinet"], ["/cancel"], ["/admin"], ["/referal"], ["/cashback"], ["/instagram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]],
+        [["/book"], ["/cabinet"], ["/cancel"], ["/admin"], ["/referal"], ["/cashback"], ["/instagram", "/telegram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]],
         resize_keyboard=True
     )
 
@@ -69,6 +69,18 @@ async def referal(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"🔗 Sizning taklif havolangiz: {referral_link}\n👥 Taklif qilgan do‘stlaringiz soni: {invited_count} ta\n💰 Cashback: {cashback} so'm"
     )
+
+async def telegram(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📲 Telegram sahifamiz:\nhttps://t.me/barber_shaxzod")
+
+async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📸 Instagram sahifamiz:\nhttps://www.instagram.com/barber_shaxzod")
+
+async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📍 Manzilimiz: Toshkent, Sergeli tumani, Xiyobon ko‘chasi 25-uy")
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("ℹ️ Yordam: Har qanday savol uchun admin bilan bog‘laning yoki /start buyrug‘ini bosing.")
 
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
@@ -128,7 +140,6 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "last_cancel": existing.get("last_cancel") if existing else None
     }
 
-    # CSV ga saqlash
     save_booking_to_csv(user_id, service, date, time)
 
     booking_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
@@ -186,6 +197,10 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("admin", admin))
     app.add_handler(CommandHandler("referal", referal))
     app.add_handler(CommandHandler("cashback", referal))
+    app.add_handler(CommandHandler("location", location))
+    app.add_handler(CommandHandler("instagram", instagram))
+    app.add_handler(CommandHandler("telegram", telegram))
+    app.add_handler(CommandHandler("help", help_command))
 
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))

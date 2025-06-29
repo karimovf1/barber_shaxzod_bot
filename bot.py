@@ -36,37 +36,30 @@ async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = ReplyKeyboardMarkup(service_buttons, resize_keyboard=True, one_time_keyboard=True)
     await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=reply_markup)
 
-# Sanani tanlash
-async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
-    selected_service = context.user_data.get("selected_service")
-
-    if text in services:
-        context.user_data["selected_service"] = text
+# Xizmat tanlash
+async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    service = update.message.text
+    if service in services:
+        context.user_data["selected_service"] = service
 
         dates = get_next_dates()
-        context.user_data["available_dates"] = dates
         date_buttons = [[d] for d in dates]
         date_markup = ReplyKeyboardMarkup(date_buttons, resize_keyboard=True, one_time_keyboard=True)
 
         await update.message.reply_text(
-            f"✅ Siz tanladingiz: {text}\n\nEndi xizmat uchun kunni tanlang:",
+            f"✅ Siz tanladingiz: {service}\n\nEndi xizmat uchun kunni tanlang:",
             reply_markup=date_markup
         )
 
-    elif "available_dates" in context.user_data and text in context.user_data["available_dates"]:
-        selected_date = text
-        selected_service = selected_service or "Noma'lum"
-        context.user_data["selected_date"] = selected_date
-
+# Sana tanlash
+async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    selected_date = update.message.text
+    if selected_date in get_next_dates():
+        selected_service = context.user_data.get("selected_service", "Noma'lum")
         await update.message.reply_text(
             f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {selected_service}\n📅 Sana: {selected_date}\n🕒 Vaqt: 12:00\n\nTez orada siz bilan bog‘lanamiz!"
         )
 
-# 📋 Xizmat turlari tugmasi bosilganda /book funksiyasini chaqirish
-tugma_nomi = "📋 Xizmat turlari"
-async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await book(update, context)
 
 # /cabinet komandasi
 async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):

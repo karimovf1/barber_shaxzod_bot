@@ -2,6 +2,9 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 from datetime import datetime, timedelta
 
+# Admin ID (o'zgartiring o'zingizga moslashtirib)
+ADMIN_ID = 123456789  # <-- bu yerga admin Telegram ID qo'yiladi
+
 # Xizmatlar ro'yxati
 services = [
     "Soch olish", "Soqol olish", "Soqol togirlash", "Okantovka qilish",
@@ -17,13 +20,13 @@ def get_next_dates(num_days=7):
 # Vaqtlar ro'yxati (09:00 - 21:00)
 times = [f"{hour:02d}:00" for hour in range(9, 22)]
 
-# Band qilingan vaqtlar (xotirada saqlanadi)
-booked_slots = {}  # {user_id: {"last_change": datetime, "services": {service: {"count": int, "dates": {date: time}}}, "actions": {"cancelled": int}}}
+# Band qilingan vaqtlar
+booked_slots = {}
 
 # Asosiy menyu
 def get_main_menu():
     return ReplyKeyboardMarkup(
-        [["/book"], ["/cabinet"], ["/cancel"], ["/referal"], ["/cashback"], ["/instagram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]],
+        [["/book"], ["/cabinet"], ["/cancel"], ["/admin"], ["/referal"], ["/cashback"], ["/instagram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]],
         resize_keyboard=True
     )
 
@@ -31,21 +34,18 @@ def get_main_menu():
 def get_back_button():
     return ReplyKeyboardMarkup([["🔙 Orqaga / Назад"]], resize_keyboard=True, one_time_keyboard=True)
 
-# /start komandasi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Assalomu alaykum, 'Barber Shaxzod' botiga xush kelibsiz!\nQuyidagilardan birini tanlang 👇",
         reply_markup=get_main_menu()
     )
 
-# /book komandasi
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
     service_buttons = [[s] for s in services] + [["🔙 Orqaga / Назад"]]
     reply_markup = ReplyKeyboardMarkup(service_buttons, resize_keyboard=True, one_time_keyboard=True)
     await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=reply_markup)
 
-# Xizmat tanlash
 async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
     service = update.message.text
     if service == "🔙 Orqaga / Назад":
@@ -59,7 +59,6 @@ async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = ReplyKeyboardMarkup(date_buttons, resize_keyboard=True, one_time_keyboard=True)
         await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\nEndi xizmat uchun kunni tanlang:", reply_markup=reply_markup)
 
-# Sana tanlash
 async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     selected_date = update.message.text
     if selected_date == "🔙 Orqaga / Назад":
@@ -80,7 +79,6 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = ReplyKeyboardMarkup(time_buttons, resize_keyboard=True, one_time_keyboard=True)
         await update.message.reply_text(f"📅 Sana tanlandi: {selected_date}\n\nEndi vaqtni tanlang:", reply_markup=reply_markup)
 
-# Vaqt tanlash
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     selected_time_raw = update.message.text
@@ -119,7 +117,6 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=get_main_menu()
         )
 
-# Bandlovni bekor qilish
 async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     user_data = booked_slots.get(user_id)
@@ -150,11 +147,9 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=get_main_menu()
     )
 
-# 📋 Xizmat turlari tugmasi bosilganda
 async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await book(update, context)
 
-# /cabinet komandasi
 async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     user_data = booked_slots.get(user_id, {})
@@ -177,7 +172,22 @@ async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await update.message.reply_text(text, reply_markup=get_main_menu())
 
-# === BOTNI ISHGA TUSHIRISH ===
+# === ADMIN PANEL ===
+async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID:
+        await update.message.reply_text("Kechirasiz, siz admin emassiz.")
+        return
+
+    stats = []
+    for uid, data in booked_slots.items():
+        if uid == "global": continue
+        name = (await context.bot.get_chat(uid)).first_name
+        stats.append(f"👤 {name} ({uid}) - {sum(s['count'] for s in data.get('services', {}).values())} ta bandlov")
+    if not stats:
+        await update.message.reply_text("Hech qanday foydalanuvchi hali bandlov qilmagan.")
+    else:
+        await update.message.reply_text("📊 Foydalanuvchilar bandlovlari:\n\n" + "\n".join(stats))
+
 if __name__ == '__main__':
     app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
@@ -185,6 +195,7 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("book", book))
     app.add_handler(CommandHandler("cabinet", cabinet))
     app.add_handler(CommandHandler("cancel", cancel_booking))
+    app.add_handler(CommandHandler("admin", admin))
 
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
@@ -193,3 +204,4 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), start))
 
     app.run_polling()
+

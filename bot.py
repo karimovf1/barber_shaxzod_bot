@@ -140,9 +140,10 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     today_str = datetime.now().strftime("%Y-%m-%d")
     cancels_today = user_cancel_limits.get(user_id, {}).get(today_str, 0)
+    booking_count = user_booking_limits.get(user_id, {}).get(today_str, 0)
 
-    if cancels_today >= 1:
-        await update.message.reply_text("❌ Siz bugun faqat 1 marta bandlovni bekor qilishingiz mumkin.")
+    if cancels_today >= 1 or booking_count >= 2:
+        await update.message.reply_text("❌ Siz bandlovni bekor qila olmaysiz.")
         return
 
     booking = user_bookings.get(user_id)

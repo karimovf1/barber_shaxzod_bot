@@ -16,9 +16,16 @@ user_cancel_limits = {}
 
 # Xizmatlar ro'yxati
 services = [
-    "Soch olish", "Soqol olish", "Soqol togirlash", "Okantovka qilish",
-    "Ukladka qlish", "Soch boyash", "Soqol boyash", "Yuzga maska qlish",
-    "Yuz chiskasi", "Kuyov soch"
+    "Soch olish – 200 000 so'm (yoshlar: 150 000 so'm)",
+    "Soqol olish – 70 000 so'm",
+    "Soqol to‘g‘rilash – 70 000 so'm",
+    "Okantovka qilish – 50 000 so'm",
+    "Ukladka qilish – 100 000+ so'm",
+    "Soch bo‘yash – 70 000 so'm",
+    "Soqol bo‘yash – 50 000 so'm",
+    "Yuzga maska qilish – 50 000+ so'm",
+    "Yuz chiskasi – 200 000 so'm",
+    "Kuyov sochi – 50$"
 ]
 
 def get_next_dates(num_days=7):

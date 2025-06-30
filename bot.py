@@ -16,16 +16,9 @@ user_cancel_limits = {}
 
 # Xizmatlar ro'yxati
 services = [
-    "Soch olish – 200 000 so'm (yoshlar: 150 000 so'm)",
-    "Soqol olish – 70 000 so'm",
-    "Soqol to‘g‘rilash – 70 000 so'm",
-    "Okantovka qilish – 50 000 so'm",
-    "Ukladka qilish – 100 000+ so'm",
-    "Soch bo‘yash – 70 000 so'm",
-    "Soqol bo‘yash – 50 000 so'm",
-    "Yuzga maska qilish – 50 000+ so'm",
-    "Yuz chiskasi – 200 000 so'm",
-    "Kuyov sochi – 50$"
+    "Soch olish", "Soqol olish", "Soqol togirlash", "Okantovka qilish",
+    "Ukladka qlish", "Soch boyash", "Soqol boyash", "Yuzga maska qlish",
+    "Yuz chiskasi", "Kuyov soch"
 ]
 
 def get_next_dates(num_days=7):
@@ -55,13 +48,6 @@ def get_main_menu():
 def get_back_button():
     return ReplyKeyboardMarkup([ ["🔙 Orqaga / Назад"] ], resize_keyboard=True, one_time_keyboard=True)
 
-# Til tanlash
-async def language(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    buttons = [["🇺🇿 O‘zbek tili"], ["🇷🇺 Русский язык"]]
-    await update.message.reply_text("Iltimos, tilni tanlang:", reply_markup=ReplyKeyboardMarkup(buttons, resize_keyboard=True))
-
-
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     if args:
@@ -74,16 +60,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Assalomu alaykum, 'Barber Shaxzod' botiga xush kelibsiz!\nQuyidagilardan birini tanlang 👇",
         reply_markup=get_main_menu()
     )
-
-async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
-    user_id = update.effective_user.id
-    if "O‘zbek" in text:
-        user_languages[user_id] = "uz"
-        await update.message.reply_text("Til o‘zbek tiliga o‘zgartirildi.", reply_markup=get_main_menu("uz"))
-    elif "Русский" in text:
-        user_languages[user_id] = "ru"
-        await update.message.reply_text("Язык изменен на русский.", reply_markup=get_main_menu("ru"))
 
 async def referal(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
@@ -101,9 +77,8 @@ async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📸 Instagram sahifamiz:\nhttps://www.instagram.com/barber_shaxzod\n\nInstagram sahifamizga obuna bo‘ling!")
 
 async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_location(latitude=41.30615, longitude=69.23602)
-    await update.message.reply_text("📍 Toshkent shahri, Shayxontohur tumani, Buyuk Ipak Yo‘li ko‘chasi (Buyuk Ipak Yo‘li 55-uy atrofida).")
-
+    await update.message.reply_location(latitude=41.220263, longitude=69.196518)
+    await update.message.reply_text("📍 Manzilimiz: Toshkent, Sergeli tumani, Xiyobon ko‘chasi 25-uy")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("ℹ️ Yordam: Har qanday savol uchun admin bilan bog‘laning yoki /start buyrug‘ini bosing.")
@@ -217,8 +192,7 @@ if __name__ == '__main__':
    if __name__ == '__main__':
     app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
-    
-    
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("book", book))
     app.add_handler(CommandHandler("cabinet", cabinet))
@@ -230,12 +204,11 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("instagram", instagram))
     app.add_handler(CommandHandler("telegram", telegram))
     app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("language", language))
 
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), start))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(🇺🇿 O‘zbek tili|🇷🇺 Русский язык)$"), set_language))
+
     app.run_polling()

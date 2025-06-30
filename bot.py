@@ -78,7 +78,7 @@ async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_location(latitude=41.30615, longitude=69.23602)
-    await update.message.reply_text("📍 Manzilimiz: Toshkent shahri, Sergeli hududi. Batafsil joylashuv xaritada.")
+    await update.message.reply_text("📍 Toshkent shahri, Shayxontohur tumani, Buyuk Ipak Yo‘li ko‘chasi (Buyuk Ipak Yo‘li 55-uy atrofida).")
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):

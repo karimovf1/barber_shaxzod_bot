@@ -227,6 +227,5 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), start))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💈 Narxlar$"), show_prices))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💈 Цены$"), show_prices))
 
     app.run_polling()

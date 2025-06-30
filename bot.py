@@ -77,8 +77,9 @@ async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📸 Instagram sahifamiz:\nhttps://www.instagram.com/barber_shaxzod\n\nInstagram sahifamizga obuna bo‘ling!")
 
 async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_location(latitude=41.220263, longitude=69.196518)
-    await update.message.reply_text("📍 Manzilimiz: Toshkent, Sergeli tumani, Xiyobon ko‘chasi 25-uy")
+    await update.message.reply_location(latitude=41.30615, longitude=69.23602)
+    await update.message.reply_text("📍 Manzilimiz: Toshkent shahri, Sergeli hududi. Batafsil joylashuv xaritada.")
+
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("ℹ️ Yordam: Har qanday savol uchun admin bilan bog‘laning yoki /start buyrug‘ini bosing.")

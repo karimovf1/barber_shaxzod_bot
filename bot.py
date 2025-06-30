@@ -85,15 +85,15 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
-    context.user_data["selected_services"] = []
-    buttons = [[s] for s in services] + [[SELECT_DONE]]
-    await update.message.reply_text("📋 Xizmat turlarini tanlang (bir nechta tanlashingiz mumkin):", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
-
-async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data.clear()
     buttons = [[s] for s in services]
     await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
+async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    service = update.message.text
+    if service in services:
+        context.user_data["selected_service"] = service
+        buttons = [[d] for d in get_next_dates()]
+        await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
 async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     date = update.message.text
@@ -189,8 +189,7 @@ async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_T
     await book(update, context)
 
 if __name__ == '__main__':
-   if __name__ == '__main__':
-    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
+    app = ApplicationBuilder().token("TOKEN_BU_YERGA").build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("book", book))

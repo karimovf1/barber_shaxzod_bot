@@ -24,6 +24,7 @@ services = [
 # Yordamchi tugma
 SELECT_DONE = "✅ Tanlash tugadi"
 
+
 def get_next_dates(num_days=7):
     today = datetime.now()
     return [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(num_days)]
@@ -107,41 +108,10 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     date = update.message.text
     if date in get_next_dates():
         context.user_data["selected_date"] = date
-        busy_times = booked_slots.get(date, {}).get(", ".join(context.user_data["selected_services"]), set())
+        key = ", ".join(context.user_data["selected_services"])
+        busy_times = booked_slots.get(date, {}).get(key, set())
         time_buttons = []
         for t in times:
             label = f"{t} ❌ Band" if t in busy_times else t
             time_buttons.append([label])
         await update.message.reply_text(f"📅 Sana tanlandi: {date}\n\n🕒 Iltimos, vaqtni tanlang:", reply_markup=ReplyKeyboardMarkup(time_buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
-
-async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    time = update.message.text.replace(" ❌ Band", "")
-    selected_services = context.user_data.get("selected_services", [])
-    date = context.user_data.get("selected_date")
-    user_id = update.effective_user.id
-
-    if not selected_services or not date:
-        await update.message.reply_text("Iltimos, avval xizmat va sanani tanlang.")
-        return
-
-    services_str = ", ".join(selected_services)
-    busy = booked_slots.setdefault(date, {}).setdefault(services_str, set())
-    if time in busy:
-        await update.message.reply_text("❌ Bu vaqt allaqachon band. Iltimos, boshqa vaqt tanlang.")
-        return
-
-    existing = user_bookings.get(user_id)
-    if existing and not existing.get("cancelled"):
-        await update.message.reply_text("❌ Sizda mavjud bandlov bor. Avval bekor qiling yoki kuting.")
-        return
-
-    busy.add(time)
-    user_bookings[user_id] = {
-        "services": selected_services, "date": date, "time": time,
-        "cancelled": False, "cancel_count": existing.get("cancel_count", 0) if existing else 0,
-        "last_cancel": existing.get("last_cancel") if existing else None
-    }
-
-    save_booking_to_csv(user_id, selected_services, date, time)
-
-    await update.message.reply_text(f"✅ Bandlov yakunlandi!\n\n📋 Xizmatlar: {services_str}\n📅 Sana: {date}\n🕒 Vaqt: {time}", reply_markup=get_main_menu())

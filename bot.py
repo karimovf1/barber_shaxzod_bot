@@ -71,10 +71,10 @@ async def referal(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def telegram(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("📲 Telegram sahifamiz:\nhttps://t.me/barbershaxzod_uz\n\nTelegram va Instagram sahifamizga obuna bo‘ling!")
+    await update.message.reply_text("📲 Telegram sahifamiz:\nhttps://t.me/barbershaxzod_uz\n\nTelegram sahifamizga obuna bo‘ling!")
 
 async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("📸 Instagram sahifamiz:\nhttps://www.instagram.com/barber_shaxzod\n\nTelegram va Instagram sahifamizga obuna bo‘ling!")
+    await update.message.reply_text("📸 Instagram sahifamiz:\nhttps://www.instagram.com/barber_shaxzod\n\nInstagram sahifamizga obuna bo‘ling!")
 
 async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_location(latitude=41.220263, longitude=69.196518)

@@ -60,15 +60,7 @@ async def language(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [["🇺🇿 O‘zbek tili"], ["🇷🇺 Русский язык"]]
     await update.message.reply_text("Iltimos, tilni tanlang:", reply_markup=ReplyKeyboardMarkup(buttons, resize_keyboard=True))
 
-async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
-    user_id = update.effective_user.id
-    if "O‘zbek" in text:
-        user_languages[user_id] = "uz"
-        await update.message.reply_text("Til o‘zbek tiliga o‘zgartirildi.", reply_markup=get_main_menu("uz"))
-    elif "Русский" in text:
-        user_languages[user_id] = "ru"
-        await update.message.reply_text("Язык изменен на русский.", reply_markup=get_main_menu("ru"))
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
@@ -82,6 +74,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Assalomu alaykum, 'Barber Shaxzod' botiga xush kelibsiz!\nQuyidagilardan birini tanlang 👇",
         reply_markup=get_main_menu()
     )
+
+async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    user_id = update.effective_user.id
+    if "O‘zbek" in text:
+        user_languages[user_id] = "uz"
+        await update.message.reply_text("Til o‘zbek tiliga o‘zgartirildi.", reply_markup=get_main_menu("uz"))
+    elif "Русский" in text:
+        user_languages[user_id] = "ru"
+        await update.message.reply_text("Язык изменен на русский.", reply_markup=get_main_menu("ru"))
 
 async def referal(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
@@ -215,8 +217,8 @@ if __name__ == '__main__':
    if __name__ == '__main__':
     app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
-    app.add_handler(CommandHandler("language", language))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(🇺🇿 O‘zbek tili|🇷🇺 Русский язык)$"), set_language))
+    
+    
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("book", book))
     app.add_handler(CommandHandler("cabinet", cabinet))
@@ -228,11 +230,12 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("instagram", instagram))
     app.add_handler(CommandHandler("telegram", telegram))
     app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("language", language))
 
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), start))
-
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(🇺🇿 O‘zbek tili|🇷🇺 Русский язык)$"), set_language))
     app.run_polling()

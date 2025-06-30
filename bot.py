@@ -81,7 +81,11 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📍 Manzilimiz: Toshkent, Sergeli tumani, Xiyobon ko‘chasi 25-uy")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("ℹ️ Yordam: Har qanday savol uchun admin bilan bog‘laning yoki /start buyrug‘ini bosing. Admin lichkasi https://t.me/@barber_shaxzod")
+    async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "ℹ️ Yordam: Agar savolingiz bo‘lsa, adminga murojaat qiling:\n\n@barber_shaxzod"
+    )
+
 
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()

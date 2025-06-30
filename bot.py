@@ -85,15 +85,27 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
-    buttons = [[s] for s in services]
-    await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
+    context.user_data["selected_services"] = []
+    buttons = [[s] for s in services] + [[SELECT_DONE]]
+    await update.message.reply_text("📋 Xizmat turlarini tanlang (bir nechta tanlashingiz mumkin):", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
 async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
     service = update.message.text
-    if service in services:
-        context.user_data["selected_service"] = service
+    if service == SELECT_DONE:
+        if not context.user_data["selected_services"]:
+            await update.message.reply_text("Iltimos, hech bo‘lmasa bitta xizmat tanlang.")
+            return
         buttons = [[d] for d in get_next_dates()]
-        await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
+        await update.message.reply_text(
+            "📅 Iltimos, sanani tanlang:",
+            reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True)
+        )
+    elif service in services:
+        selected = context.user_data["selected_services"]
+        if service not in selected:
+            selected.append(service)
+        await update.message.reply_text(f"✅ Tanlanganlar: {', '.join(selected)}")
+
 
 async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     date = update.message.text

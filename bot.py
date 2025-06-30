@@ -16,16 +16,9 @@ user_cancel_limits = {}
 
 # Xizmatlar ro'yxati
 services = [
-    "Soch olish – 200 000 so'm (yoshlar: 150 000 so'm)",
-    "Soqol olish – 70 000 so'm",
-    "Soqol to‘g‘rilash – 70 000 so'm",
-    "Okantovka qilish – 50 000 so'm",
-    "Ukladka qilish – 100 000+ so'm",
-    "Soch bo‘yash – 70 000 so'm",
-    "Soqol bo‘yash – 50 000 so'm",
-    "Yuzga maska qilish – 50 000+ so'm",
-    "Yuz chiskasi – 200 000 so'm",
-    "Kuyov sochi – 50$"
+    "Soch olish", "Soqol olish", "Soqol togirlash", "Okantovka qilish",
+    "Ukladka qlish", "Soch boyash", "Soqol boyash", "Yuzga maska qlish",
+    "Yuz chiskasi", "Kuyov soch"
 ]
 
 def get_next_dates(num_days=7):
@@ -212,7 +205,7 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("telegram", telegram))
     app.add_handler(CommandHandler("help", help_command))
 
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(service_pattern), choose_service))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))

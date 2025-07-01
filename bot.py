@@ -78,6 +78,14 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def narxlar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("💈 Narxlar:", reply_markup=ReplyKeyboardMarkup([[s] for s in services], resize_keyboard=True))
 
+async def narxlar(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["step"] = "choose_service"  # Avval 'book' edi
+    await update.message.reply_text(
+        "💈 Narxlar:",
+        reply_markup=ReplyKeyboardMarkup([[s] for s in services] + [["🔙 Orqaga / Назад"]], resize_keyboard=True)
+    )
+
+
 async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
     service = update.message.text
     context.user_data["selected_service"] = service

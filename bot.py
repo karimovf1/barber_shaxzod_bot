@@ -55,6 +55,48 @@ def get_main_menu():
 def get_back_button():
     return ReplyKeyboardMarkup([["🔙 Orqaga / Назад"]], resize_keyboard=True, one_time_keyboard=True)
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "Assalomu alaykum! Xush kelibsiz!", reply_markup=get_main_menu()
+    )
+
+async def referal(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🔗 Sizning taklif havolangiz: ...")
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("ℹ️ Yordam: ...")
+
+async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📸 Instagram sahifamiz: ...")
+
+async def telegram(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📲 Telegram sahifamiz: ...")
+
+async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📍 Manzilimiz: ...")
+
+async def narxlar(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("💈 Narxlar:", reply_markup=ReplyKeyboardMarkup([[s] for s in services], resize_keyboard=True))
+
+async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    service = update.message.text
+    context.user_data["selected_service"] = service
+    context.user_data["step"] = "choose_service"
+    buttons = [[d] for d in get_next_dates()]
+    await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
+
+async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    date = update.message.text
+    context.user_data["selected_date"] = date
+    context.user_data["step"] = "choose_date"
+    service = context.user_data.get("selected_service")
+    busy_times = booked_slots.get(date, {}).get(service, set())
+    time_buttons = []
+    for t in times:
+        label = f"{t} ❌ Band" if t in busy_times else t
+        time_buttons.append([label])
+    await update.message.reply_text(f"📅 Sana tanlandi: {date}\n\n🕒 Iltimos, vaqtni tanlang:", reply_markup=ReplyKeyboardMarkup(time_buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
+
 async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     step = context.user_data.get("step")
     if step == "choose_date":
@@ -73,35 +115,14 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     date = context.user_data.get("selected_date")
     user_id = update.effective_user.id
 
-    if not service or not date:
-        await update.message.reply_text("Iltimos, avval xizmat va sanani tanlang.")
-        return
-
     busy = booked_slots.setdefault(date, {}).setdefault(service, set())
-    if time in busy:
-        await update.message.reply_text("❌ Bu vaqt allaqachon band. Iltimos, boshqa vaqt tanlang.")
-        return
-
-    existing = user_bookings.get(user_id)
-    if existing and not existing.get("cancelled"):
-        await update.message.reply_text("❌ Sizda mavjud bandlov bor. Avval bekor qiling yoki kuting.")
-        return
-
     busy.add(time)
     user_bookings[user_id] = {
         "service": service, "date": date, "time": time,
-        "cancelled": False, "cancel_count": existing.get("cancel_count", 0) if existing else 0,
-        "last_cancel": existing.get("last_cancel") if existing else None
+        "cancelled": False
     }
 
     save_booking_to_csv(user_id, service, date, time)
-
-    booking_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
-    remind_time = booking_datetime - timedelta(hours=1)
-    now = datetime.now()
-    if remind_time > now:
-        wait_seconds = (remind_time - now).total_seconds()
-        asyncio.create_task(schedule_reminder(update, context, wait_seconds, booking_datetime.strftime("%H:%M")))
 
     await update.message.reply_text(f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {service}\n📅 Sana: {date}\n🕒 Vaqt: {time}", reply_markup=get_main_menu())
 
@@ -113,7 +134,7 @@ async def schedule_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     )
 
 if __name__ == '__main__':
-    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
+    app = ApplicationBuilder().token("YOUR_BOT_TOKEN_HERE").build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("referal", referal))

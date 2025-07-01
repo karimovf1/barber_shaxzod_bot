@@ -52,12 +52,12 @@ def save_booking_to_csv(user_id, service, date, time):
 def get_main_menu():
     return ReplyKeyboardMarkup(
         [["/book"], ["/cabinet"], ["/cancel"], ["/admin"], ["/referal"], ["/cashback"],
-         ["/instagram", "/telegram"], ["/location", "📍 Manzil"], ["/help"], ["📋 Xizmat turlari"]],
+         ["/instagram", "/telegram"], ["📍 Google manzil"], ["/help"], ["📋 Xizmat turlari"]],
         resize_keyboard=True
     )
 
 def get_back_button():
-    return ReplyKeyboardMarkup([["\ud83d\udd19 Orqaga / Назад"]], resize_keyboard=True, one_time_keyboard=True)
+    return ReplyKeyboardMarkup([["🔙 Orqaga / Назад"]], resize_keyboard=True, one_time_keyboard=True)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
@@ -87,36 +87,38 @@ async def telegram(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📸 Instagram sahifamiz:\nhttps://www.instagram.com/barber_shaxzod\n\nInstagram sahifamizga obuna bo‘ling!")
 
-async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_location(latitude=41.220263, longitude=69.196518)
-    await update.message.reply_text("📍 Manzilimiz: Toshkent, Sergeli tumani, Xiyobon ko‘chasi 25-uy")
+async def google_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📍 Google xaritadagi manzil:\nhttps://maps.app.goo.gl/EZZvuDih8tEKBWEu5")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("ℹ️ Yordam: Har qanday savol uchun admin bilan bog‘laning yoki /start buyrug‘ini bosing.")
 
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
+    context.user_data["step"] = "choose_service"
     buttons = [[s] for s in services]
-    await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["\ud83d\udd19 Orqaga / Назад"]], resize_keyboard=True))
+    await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
 async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
     service = update.message.text
     if service in services:
         context.user_data["selected_service"] = service
+        context.user_data["step"] = "choose_service"
         buttons = [[d] for d in get_next_dates()]
-        await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\n🗕 Iltimos, sanani tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["\ud83d\udd19 Orqaga / Назад"]], resize_keyboard=True))
+        await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
 async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     date = update.message.text
     if date in get_next_dates():
         context.user_data["selected_date"] = date
+        context.user_data["step"] = "choose_date"
         service = context.user_data.get("selected_service")
         busy_times = booked_slots.get(date, {}).get(service, set())
         time_buttons = []
         for t in times:
             label = f"{t} ❌ Band" if t in busy_times else t
             time_buttons.append([label])
-        await update.message.reply_text(f"🗕 Sana tanlandi: {date}\n\n🕒 Iltimos, vaqtni tanlang:", reply_markup=ReplyKeyboardMarkup(time_buttons + [["\ud83d\udd19 Orqaga / Назад"]], resize_keyboard=True))
+        await update.message.reply_text(f"📅 Sana tanlandi: {date}\n\n🕒 Iltimos, vaqtni tanlang:", reply_markup=ReplyKeyboardMarkup(time_buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     time = update.message.text.replace(" ❌ Band", "")
@@ -154,7 +156,7 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         wait_seconds = (remind_time - now).total_seconds()
         asyncio.create_task(schedule_reminder(update, context, wait_seconds, booking_datetime.strftime("%H:%M")))
 
-    await update.message.reply_text(f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {service}\n🗕 Sana: {date}\n🕒 Vaqt: {time}", reply_markup=get_main_menu())
+    await update.message.reply_text(f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {service}\n📅 Sana: {date}\n🕒 Vaqt: {time}", reply_markup=get_main_menu())
 
 async def schedule_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, delay: float, time_str: str):
     await asyncio.sleep(delay)
@@ -162,14 +164,6 @@ async def schedule_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         chat_id=update.effective_user.id,
         text=f"⏰ Eslatma: Siz bugun soat {time_str} da bandlovingiz bor. Iltimos, vaqtida yetib keling!"
     )
-
-async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    booking = user_bookings.get(user_id)
-    booking_info = f"📋 {booking['service']}\n🗕 {booking['date']}\n🕒 {booking['time']}" if booking and not booking.get("cancelled") else "Bandlov mavjud emas."
-    cashback = cashback_data.get(str(user_id), 0)
-    invites = len(referrals_data.get(str(user_id), []))
-    await update.message.reply_text(f"👤 Shaxsiy kabinet:\n\n{booking_info}\n💰 Cashback: {cashback} so'm\n👥 Taklif qilganlar: {invites} ta")
 
 async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -189,38 +183,53 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Sizda bandlov mavjud emas.")
 
+async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    booking = user_bookings.get(user_id)
+    booking_info = f"📋 {booking['service']}\n📅 {booking['date']}\n🕒 {booking['time']}" if booking and not booking.get("cancelled") else "Bandlov mavjud emas."
+    cashback = cashback_data.get(str(user_id), 0)
+    invites = len(referrals_data.get(str(user_id), []))
+    await update.message.reply_text(f"👤 Shaxsiy kabinet:\n\n{booking_info}\n💰 Cashback: {cashback} so'm\n👥 Taklif qilganlar: {invites} ta")
+
 async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         await update.message.reply_text("Siz admin emassiz.")
         return
-    stats = f"👥 Foydalanuvchilar: {len(user_bookings)}\n🗕 Bandlovlar: {sum(len(v) for v in booked_slots.values())}"
+    stats = f"👥 Foydalanuvchilar: {len(user_bookings)}\n📅 Bandlovlar: {sum(len(v) for v in booked_slots.values())}"
     await update.message.reply_text(f"🔧 Admin panel:\n{stats}")
 
 async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await book(update, context)
 
 async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Bosh menyuga qaytdingiz.", reply_markup=get_main_menu())
+    step = context.user_data.get("step")
+    if step == "choose_service":
+        await book(update, context)
+    elif step == "choose_date":
+        await choose_service(update, context)
+    else:
+        await start(update, context)
 
-app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
+if __name__ == '__main__':
+    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
-app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("book", book))
-app.add_handler(CommandHandler("cabinet", cabinet))
-app.add_handler(CommandHandler("cancel", cancel_booking))
-app.add_handler(CommandHandler("admin", admin))
-app.add_handler(CommandHandler("referal", referal))
-app.add_handler(CommandHandler("cashback", referal))
-app.add_handler(CommandHandler("location", location))
-app.add_handler(CommandHandler("instagram", instagram))
-app.add_handler(CommandHandler("telegram", telegram))
-app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("book", book))
+    app.add_handler(CommandHandler("cabinet", cabinet))
+    app.add_handler(CommandHandler("cancel", cancel_booking))
+    app.add_handler(CommandHandler("admin", admin))
+    app.add_handler(CommandHandler("referal", referal))
+    app.add_handler(CommandHandler("cashback", referal))
+    app.add_handler(CommandHandler("location", google_location))
+    app.add_handler(CommandHandler("instagram", instagram))
+    app.add_handler(CommandHandler("telegram", telegram))
+    app.add_handler(CommandHandler("help", help_command))
 
-app.add_handler(MessageHandler(filters.TEXT & filters.Regex(service_pattern), choose_service))
-app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
-app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
-app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
-app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), back_handler))
-app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📍 Manzil$"), location))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(service_pattern), choose_service))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), back_handler))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📍 Google manzil$"), google_location))
 
-app.run_polling()
+    app.run_polling()

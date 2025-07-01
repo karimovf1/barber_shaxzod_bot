@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import asyncio
 import csv
 import os
+import re
 
 # Admin ID
 ADMIN_ID = 123456789  # <-- bu yerga admin Telegram ID qo'yiladi
@@ -28,6 +29,9 @@ services = [
     "Kuyov sochi – 50$"
 ]
 
+escaped_services = [re.escape(s) for s in services]  # Regex uchun escape
+service_pattern = f"^({'|'.join(escaped_services)})$"
+
 def get_next_dates(num_days=7):
     today = datetime.now()
     return [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(num_days)]
@@ -48,7 +52,7 @@ def save_booking_to_csv(user_id, service, date, time):
 # Menyu
 def get_main_menu():
     return ReplyKeyboardMarkup(
-        [["/book"], ["/cabinet"], ["/cancel"], ["/admin"], ["/referal"], ["/cashback"], ["/instagram", "/telegram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]],
+        [["/book"], ["/cabinet"], ["/cancel"], ["/admin"], ["/referal"], ["/cashback"], ["/instagram", "/telegram"], ["/location"], ["/help"], ["📋 Xizmat turlari"], ["💈 Narxlar"]],
         resize_keyboard=True
     )
 
@@ -195,10 +199,12 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await book(update, context)
 
-if __name__ == '__main__':
-   if __name__ == '__main__':
-    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
+async def show_prices(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = "\n".join(services)
+    await update.message.reply_text(f"💈 Narxlar ro‘yxati:\n\n{text}")
 
+if __name__ == '__main__':
+    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("book", book))
@@ -212,10 +218,11 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("telegram", telegram))
     app.add_handler(CommandHandler("help", help_command))
 
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(service_pattern), choose_service))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💈 Narxlar$"), show_prices))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), start))
 
     app.run_polling()

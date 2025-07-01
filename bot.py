@@ -103,7 +103,7 @@ async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
     service = update.message.text
     if service in services:
         context.user_data["selected_service"] = service
-        context.user_data["step"] = "choose_service"
+        context.user_data["step"] = "choose_date"
         buttons = [[d] for d in get_next_dates()]
         await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
@@ -111,7 +111,7 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     date = update.message.text
     if date in get_next_dates():
         context.user_data["selected_date"] = date
-        context.user_data["step"] = "choose_date"
+        context.user_data["step"] = "choose_time"
         service = context.user_data.get("selected_service")
         busy_times = booked_slots.get(date, {}).get(service, set())
         time_buttons = []
@@ -203,10 +203,12 @@ async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_T
 
 async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     step = context.user_data.get("step")
-    if step == "choose_service":
-        await book(update, context)
-    elif step == "choose_date":
+    if step == "choose_time":
+        context.user_data["step"] = "choose_date"
         await choose_service(update, context)
+    elif step == "choose_date":
+        context.user_data["step"] = "choose_service"
+        await book(update, context)
     else:
         await start(update, context)
 

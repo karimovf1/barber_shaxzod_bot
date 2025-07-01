@@ -99,7 +99,7 @@ async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
     service = update.message.text
     if service in services:
         context.user_data["selected_service"] = service
-        context.user_data["step"] = "choose_service"  # ✅ QO‘SHILDI
+        context.user_data["step"] = "choose_service"
         buttons = [[d] for d in get_next_dates()]
         await update.message.reply_text(
             f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:",
@@ -117,10 +117,6 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
             label = f"{t} ❌ Band" if t in busy_times else t
             time_buttons.append([label])
         await update.message.reply_text(f"📅 Sana tanlandi: {date}\n\n🕒 Iltimos, vaqtni tanlang:", reply_markup=ReplyKeyboardMarkup(time_buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
-
-async def schedule_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, delay: float, time_str: str):
-    await asyncio.sleep(delay)
-    await context.bot.send_message(chat_id=update.effective_user.id, text=f"⏰ Eslatma: Siz bugun soat {time_str} da bandlovingiz bor. Iltimos, vaqtida yetib keling!")
 
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     time = update.message.text.replace(" ❌ Band", "")
@@ -160,6 +156,13 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {service}\n📅 Sana: {date}\n🕒 Vaqt: {time}", reply_markup=get_main_menu())
 
+async def schedule_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, delay: float, time_str: str):
+    await asyncio.sleep(delay)
+    await context.bot.send_message(
+        chat_id=update.effective_user.id,
+        text=f"⏰ Eslatma: Siz bugun soat {time_str} da bandlovingiz bor. Iltimos, vaqtida yetib keling!"
+    )
+
 async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     booking = user_bookings.get(user_id)
@@ -196,7 +199,6 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await book(update, context)
 
-# ✅ 🔙 Orqaga handler
 async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     step = context.user_data.get("step")
     if step == "choose_service":
@@ -204,25 +206,24 @@ async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await start(update, context)
 
-if __name__ == '__main__':
-    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
+app = ApplicationBuilder().token("YOUR_TOKEN_HERE").build()
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("book", book))
-    app.add_handler(CommandHandler("cabinet", cabinet))
-    app.add_handler(CommandHandler("cancel", cancel_booking))
-    app.add_handler(CommandHandler("admin", admin))
-    app.add_handler(CommandHandler("referal", referal))
-    app.add_handler(CommandHandler("cashback", referal))
-    app.add_handler(CommandHandler("location", location))
-    app.add_handler(CommandHandler("instagram", instagram))
-    app.add_handler(CommandHandler("telegram", telegram))
-    app.add_handler(CommandHandler("help", help_command))
+app.add_handler(CommandHandler("start", start))
+app.add_handler(CommandHandler("book", book))
+app.add_handler(CommandHandler("cabinet", cabinet))
+app.add_handler(CommandHandler("cancel", cancel_booking))
+app.add_handler(CommandHandler("admin", admin))
+app.add_handler(CommandHandler("referal", referal))
+app.add_handler(CommandHandler("cashback", referal))
+app.add_handler(CommandHandler("location", location))
+app.add_handler(CommandHandler("instagram", instagram))
+app.add_handler(CommandHandler("telegram", telegram))
+app.add_handler(CommandHandler("help", help_command))
 
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), back_handler))  # ✅ QO‘SHILDI
+app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
+app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
+app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
+app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
+app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), back_handler))
 
-    app.run_polling()
+app.run_polling()

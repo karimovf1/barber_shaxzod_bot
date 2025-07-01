@@ -95,6 +95,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
+    context.user_data["step"] = "choose_service"
     buttons = [[s] for s in services]
     await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
@@ -102,6 +103,7 @@ async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
     service = update.message.text
     if service in services:
         context.user_data["selected_service"] = service
+        context.user_data["step"] = "choose_date"
         buttons = [[d] for d in get_next_dates()]
         await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
@@ -109,6 +111,7 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     date = update.message.text
     if date in get_next_dates():
         context.user_data["selected_date"] = date
+        context.user_data["step"] = "choose_time"
         service = context.user_data.get("selected_service")
         busy_times = booked_slots.get(date, {}).get(service, set())
         time_buttons = []
@@ -199,7 +202,19 @@ async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_T
     await book(update, context)
 
 async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await start(update, context)
+    step = context.user_data.get("step")
+
+    if step == "choose_date":
+        buttons = [[s] for s in services]
+        context.user_data["step"] = "choose_service"
+        await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
+    elif step == "choose_time":
+        service = context.user_data.get("selected_service")
+        buttons = [[d] for d in get_next_dates()]
+        context.user_data["step"] = "choose_date"
+        await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
+    else:
+        await start(update, context)
 
 app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 

@@ -13,7 +13,7 @@ ADMIN_ID = 123456789  # <-- bu yerga admin Telegram ID qo'yiladi
 referrals_data = {}
 cashback_data = {}
 user_bookings = {}
-user_cancel_limits = {}
+booked_slots = {}
 
 # Xizmatlar ro'yxati
 services = [
@@ -29,18 +29,15 @@ services = [
     "Kuyov sochi – 50$"
 ]
 
-escaped_services = [re.escape(s) for s in services]  # Regex uchun escape
+escaped_services = [re.escape(s) for s in services]
 service_pattern = f"^({'|'.join(escaped_services)})$"
 
 def get_next_dates(num_days=7):
     today = datetime.now()
     return [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(num_days)]
 
-# Vaqtlar (09:00-21:00)
 times = [f"{hour:02d}:00" for hour in range(9, 22)]
-booked_slots = {}
 
-# CSV ga bandlov saqlash
 def save_booking_to_csv(user_id, service, date, time):
     file_exists = os.path.isfile("bookings.csv")
     with open("bookings.csv", mode="a", newline='', encoding="utf-8") as file:
@@ -49,7 +46,6 @@ def save_booking_to_csv(user_id, service, date, time):
             writer.writerow(["user_id", "service", "date", "time", "timestamp"])
         writer.writerow([user_id, service, date, time, datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
 
-# Menyu
 def get_main_menu():
     return ReplyKeyboardMarkup(
         [["/book"], ["/cabinet"], ["/cancel"], ["/admin"], ["/referal"], ["/cashback"], ["/instagram", "/telegram"], ["/location"], ["/help"], ["📋 Xizmat turlari"], ["💈 Narxlar"]],
@@ -57,7 +53,7 @@ def get_main_menu():
     )
 
 def get_back_button():
-    return ReplyKeyboardMarkup([ ["🔙 Orqaga / Назад"] ], resize_keyboard=True, one_time_keyboard=True)
+    return ReplyKeyboardMarkup([["🔙 Orqaga / Назад"]], resize_keyboard=True, one_time_keyboard=True)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
@@ -96,6 +92,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
+    context.user_data["step"] = "book"
     buttons = [[s] for s in services]
     await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
@@ -103,6 +100,7 @@ async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
     service = update.message.text
     if service in services:
         context.user_data["selected_service"] = service
+        context.user_data["step"] = "choose_service"
         buttons = [[d] for d in get_next_dates()]
         await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
@@ -110,6 +108,7 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     date = update.message.text
     if date in get_next_dates():
         context.user_data["selected_date"] = date
+        context.user_data["step"] = "choose_date"
         service = context.user_data.get("selected_service")
         busy_times = booked_slots.get(date, {}).get(service, set())
         time_buttons = []
@@ -117,6 +116,15 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
             label = f"{t} ❌ Band" if t in busy_times else t
             time_buttons.append([label])
         await update.message.reply_text(f"📅 Sana tanlandi: {date}\n\n🕒 Iltimos, vaqtni tanlang:", reply_markup=ReplyKeyboardMarkup(time_buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
+
+async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    step = context.user_data.get("step")
+    if step == "choose_date":
+        await choose_service(update, context)
+    elif step == "choose_service":
+        await book(update, context)
+    else:
+        await start(update, context)
 
 async def schedule_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, delay: float, time_str: str):
     await asyncio.sleep(delay)
@@ -223,6 +231,6 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💈 Narxlar$"), show_prices))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), start))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), handle_back))
 
     app.run_polling()

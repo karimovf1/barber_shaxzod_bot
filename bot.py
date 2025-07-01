@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import asyncio
 import csv
 import os
+import re
 
 # Admin ID
 ADMIN_ID = 123456789  # <-- bu yerga admin Telegram ID qo'yiladi
@@ -28,6 +29,9 @@ services = [
     "Kuyov sochi – 50$"
 ]
 
+escaped_services = [re.escape(s) for s in services]
+service_pattern = f"^({'|'.join(escaped_services)})$"
+
 def get_next_dates(num_days=7):
     today = datetime.now()
     return [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(num_days)]
@@ -45,7 +49,6 @@ def save_booking_to_csv(user_id, service, date, time):
             writer.writerow(["user_id", "service", "date", "time", "timestamp"])
         writer.writerow([user_id, service, date, time, datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
 
-# Menyu
 def get_main_menu():
     return ReplyKeyboardMarkup(
         [["/book"], ["/cabinet"], ["/cancel"], ["/admin"], ["/referal"], ["/cashback"], ["/instagram", "/telegram"], ["/location"], ["/help"], ["📋 Xizmat turlari"]],
@@ -53,7 +56,7 @@ def get_main_menu():
     )
 
 def get_back_button():
-    return ReplyKeyboardMarkup([["🔙 Orqaga / Назад"]], resize_keyboard=True, one_time_keyboard=True)
+    return ReplyKeyboardMarkup([ ["🔙 Orqaga / Назад"] ], resize_keyboard=True, one_time_keyboard=True)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
@@ -99,12 +102,8 @@ async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
     service = update.message.text
     if service in services:
         context.user_data["selected_service"] = service
-        context.user_data["step"] = "choose_service"
         buttons = [[d] for d in get_next_dates()]
-        await update.message.reply_text(
-            f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:",
-            reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True)
-        )
+        await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
 async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     date = update.message.text
@@ -200,14 +199,9 @@ async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_T
     await book(update, context)
 
 async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    step = context.user_data.get("step")
-    if step == "choose_service":
-        await book(update, context)
-    else:
-        await start(update, context)
+    await start(update, context)
 
-app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
-
+app = ApplicationBuilder().token("YOUR_TOKEN_HERE").build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("book", book))
@@ -221,7 +215,7 @@ app.add_handler(CommandHandler("instagram", instagram))
 app.add_handler(CommandHandler("telegram", telegram))
 app.add_handler(CommandHandler("help", help_command))
 
-app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(services)})$"), choose_service))
+app.add_handler(MessageHandler(filters.TEXT & filters.Regex(service_pattern), choose_service))
 app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
 app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
 app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))

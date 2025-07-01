@@ -121,6 +121,7 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"📅 Sana tanlandi: {date}\n\n🕒 Iltimos, vaqtni tanlang:", reply_markup=ReplyKeyboardMarkup(time_buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["step"] = "done"
     time = update.message.text.replace(" ❌ Band", "")
     service = context.user_data.get("selected_service")
     date = context.user_data.get("selected_date")
@@ -210,6 +211,7 @@ async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["step"] = "choose_service"
         await book(update, context)
     else:
+        context.user_data.clear()
         await start(update, context)
 
 if __name__ == '__main__':

@@ -89,7 +89,7 @@ async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def google_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Lokatsiyani yuborish (tortburchak ko‘rinishda)
-    await update.message.reply_location(latitude=41.220263, longitude=69.196518)
+    await update.message.reply_location(latitude=41.306167, longitude=69.236028)
     
     # Manzil haqida qo‘shimcha ma'lumot va Google xarita havolasi
     text = (

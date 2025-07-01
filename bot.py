@@ -195,15 +195,6 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await book(update, context)
 
-# Xizmatlar regex mosligi
-escaped_services = [re.escape(s) for s in services]  # Escape qilingan xizmat nomlari
-service_pattern = f"^({'|'.join(escaped_services)})$"
-
-# Narxlar tugmasi
-async def show_prices(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    prices_text = "\n".join(services)
-    await update.message.reply_text(f"💈 Narxlar ro‘yxati:\n\n{prices_text}"
-
 if __name__ == '__main__':
    if __name__ == '__main__':
     app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
@@ -226,6 +217,5 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), start))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💈 Narxlar$"), show_prices))
 
     app.run_polling()

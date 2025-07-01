@@ -95,10 +95,11 @@ async def google_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         "📍 <b>Barber Shaxzod manzili:</b>\n\n"
         "🗺 <a href='https://maps.app.goo.gl/EZZvuDih8tEKBWEu5'>Google xaritada ko‘rish</a>\n"
-        "🏙 Toshkent, Sergeli tumani, Yangi Sergeli 3-mavze, 25-uy\n"
+        "🏙 Toshkent, Sergeli tumani, Xiyobon ko‘chasi, 25-uy\n"
         "🕘 Ish vaqti: 09:00 - 21:00"
     )
     await update.message.reply_text(text, parse_mode="HTML", disable_web_page_preview=True)
+
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("ℹ️ Yordam: Har qanday savol uchun admin bilan bog‘laning yoki /start buyrug‘ini bosing.")
@@ -110,14 +111,18 @@ async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
 async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["back_pressed"] = False  # Flagni o'chiramiz, chunki yangi harakat boshlandi
     service = update.message.text
     if service in services:
         context.user_data["selected_service"] = service
         context.user_data["step"] = "choose_date"
         buttons = [[d] for d in get_next_dates()]
-        await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
-
+        await update.message.reply_text(
+            f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:",
+            reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True)
+        )
 async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["back_pressed"] = False
     date = update.message.text
     if date in get_next_dates():
         context.user_data["selected_date"] = date
@@ -128,9 +133,12 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for t in times:
             label = f"{t} ❌ Band" if t in busy_times else t
             time_buttons.append([label])
-        await update.message.reply_text(f"📅 Sana tanlandi: {date}\n\n🕒 Iltimos, vaqtni tanlang:", reply_markup=ReplyKeyboardMarkup(time_buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
-
+        await update.message.reply_text(
+            f"📅 Sana tanlandi: {date}\n\n🕒 Iltimos, vaqtni tanlang:",
+            reply_markup=ReplyKeyboardMarkup(time_buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True)
+        )
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["back_pressed"] = False
     context.user_data["step"] = "done"
     time = update.message.text.replace(" ❌ Band", "")
     service = context.user_data.get("selected_service")
@@ -213,16 +221,23 @@ async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_T
     await book(update, context)
 
 async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if context.user_data.get("back_pressed", False):
+        # Agar ketma-ket orqaga bosilgan bo‘lsa, hech narsa qilma
+        return
+    context.user_data["back_pressed"] = True
+
     step = context.user_data.get("step")
+
     if step == "choose_time":
         context.user_data["step"] = "choose_date"
         await choose_date(update, context)
     elif step == "choose_date":
         context.user_data["step"] = "choose_service"
-        await book(update, context)
+        await choose_service(update, context)
     else:
         context.user_data.clear()
         await start(update, context)
+
 
 if __name__ == '__main__':
     app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
@@ -234,7 +249,7 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("admin", admin))
     app.add_handler(CommandHandler("referal", referal))
     app.add_handler(CommandHandler("cashback", referal))
-    app.add_handler(CommandHandler("location", google_location))  # <-- bu yerda /location qo‘shildi
+    app.add_handler(CommandHandler("location", google_location))
     app.add_handler(CommandHandler("instagram", instagram))
     app.add_handler(CommandHandler("telegram", telegram))
     app.add_handler(CommandHandler("help", help_command))

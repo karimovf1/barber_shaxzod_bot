@@ -63,9 +63,9 @@ async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
     elif step == "choose_service":
         context.user_data["step"] = "book"
-        await update.message.reply_text("Bosh menyuga qaytdingiz.", reply_markup=get_main_menu())
+        await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=ReplyKeyboardMarkup([[s] for s in services] + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
     else:
-        await update.message.reply_text("Bosh menyuga qaytdingiz.", reply_markup=get_main_menu())
+        await update.message.reply_text("🏠 Bosh menyuga qaytdingiz.", reply_markup=get_main_menu())
 
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     time = update.message.text.replace(" ❌ Band", "")
@@ -113,8 +113,7 @@ async def schedule_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     )
 
 if __name__ == '__main__':
-    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
-
+    app = ApplicationBuilder().token("YOUR_BOT_TOKEN_HERE").build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("referal", referal))

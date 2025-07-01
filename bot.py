@@ -88,7 +88,18 @@ async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📸 Instagram sahifamiz:\nhttps://www.instagram.com/barber_shaxzod\n\nInstagram sahifamizga obuna bo‘ling!")
 
 async def google_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("📍 Google xaritadagi manzil:\nhttps://maps.app.goo.gl/EZZvuDih8tEKBWEu5")
+    # Lokatsiyani yuborish (tortburchak ko‘rinishda)
+    await update.message.reply_location(latitude=41.220263, longitude=69.196518)
+    
+    # Manzil haqida qo‘shimcha ma'lumot va Google xarita havolasi
+    text = (
+        "📍 <b>Barber Shaxzod manzili:</b>\n\n"
+        "🗺 <a href='https://maps.app.goo.gl/EZZvuDih8tEKBWEu5'>Google xaritada ko‘rish</a>\n"
+        "🏙 Toshkent, Sergeli tumani, Xiyobon ko‘chasi, 25-uy\n"
+        "🕘 Ish vaqti: 09:00 - 21:00"
+    )
+    await update.message.reply_text(text, parse_mode="HTML", disable_web_page_preview=True)
+
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("ℹ️ Yordam: Har qanday savol uchun admin bilan bog‘laning yoki /start buyrug‘ini bosing.")

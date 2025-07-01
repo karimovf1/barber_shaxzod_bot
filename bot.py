@@ -101,7 +101,10 @@ async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["selected_service"] = service
         context.user_data["step"] = "choose_service"  # ✅ QO‘SHILDI
         buttons = [[d] for d in get_next_dates()]
-        await update.message.reply_text(f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
+        await update.message.reply_text(
+            f"✅ Siz tanladingiz: {service}\n\n📅 Iltimos, sanani tanlang:",
+            reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True)
+        )
 
 async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     date = update.message.text
@@ -193,7 +196,7 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await book(update, context)
 
-# ✅ 🔙 Orqaga tugmasi uchun handler
+# ✅ 🔙 Orqaga handler
 async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     step = context.user_data.get("step")
     if step == "choose_service":
@@ -220,6 +223,6 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex(f"^({'|'.join(get_next_dates())})$"), choose_date))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^.*(09|10|11|12|13|14|15|16|17|18|19|20|21):00.*$"), choose_time))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📋 Xizmat turlari$"), handle_services_button))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), back_handler))  # ✅ Qo‘shildi
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🔙 Orqaga / Назад$"), back_handler))  # ✅ QO‘SHILDI
 
     app.run_polling()

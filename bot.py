@@ -88,10 +88,7 @@ async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📸 Instagram sahifamiz:\nhttps://www.instagram.com/barber_shaxzod\n\nInstagram sahifamizga obuna bo‘ling!")
 
 async def google_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Lokatsiyani yuborish (tortburchak ko‘rinishda)
     await update.message.reply_location(latitude=41.306167, longitude=69.236028)
-    
-    # Manzil haqida qo‘shimcha ma'lumot va Google xarita havolasi
     text = (
         "📍 <b>Barber Shaxzod manzili:</b>\n\n"
         "🗺 <a href='https://maps.app.goo.gl/EZZvuDih8tEKBWEu5'>Google xaritada ko‘rish</a>\n"
@@ -106,14 +103,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
     context.user_data["step"] = "choose_service"
-    context.user_data["back_pressed"] = False
     buttons = [[s] for s in services]
     await update.message.reply_text("📋 Xizmat turini tanlang:", reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True))
 
 async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["back_pressed"] = False
-    context.user_data["last_step"] = "choose_service"
-    context.user_data["step"] = "choose_service"
     service = update.message.text
     if service in services:
         context.user_data["selected_service"] = service
@@ -125,9 +118,6 @@ async def choose_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["back_pressed"] = False
-    context.user_data["last_step"] = "choose_date"
-    context.user_data["step"] = "choose_date"
     date = update.message.text
     if date in get_next_dates():
         context.user_data["selected_date"] = date
@@ -144,9 +134,7 @@ async def choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["back_pressed"] = False
-    context.user_data["last_step"] = "choose_time"
-    context.user_data["step"] = "choose_time"
+    context.user_data["step"] = "done"
     time = update.message.text.replace(" ❌ Band", "")
     service = context.user_data.get("selected_service")
     date = context.user_data.get("selected_date")
@@ -182,10 +170,7 @@ async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         wait_seconds = (remind_time - now).total_seconds()
         asyncio.create_task(schedule_reminder(update, context, wait_seconds, booking_datetime.strftime("%H:%M")))
 
-    await update.message.reply_text(
-        f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {service}\n📅 Sana: {date}\n🕒 Vaqt: {time}",
-        reply_markup=get_main_menu()
-    )
+    await update.message.reply_text(f"✅ Bandlov yakunlandi!\n\n📋 Xizmat: {service}\n📅 Sana: {date}\n🕒 Vaqt: {time}", reply_markup=get_main_menu())
 
 async def schedule_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, delay: float, time_str: str):
     await asyncio.sleep(delay)
@@ -231,22 +216,12 @@ async def handle_services_button(update: Update, context: ContextTypes.DEFAULT_T
     await book(update, context)
 
 async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    current_step = context.user_data.get("step")
-    last_step = context.user_data.get("last_step")
+    step = context.user_data.get("step")
 
-    # Agar foydalanuvchi yangi bosqichga o'tmagan bo'lsa va back_pressed True bo'lsa,
-    # yani ketma-ket orqaga bosayotgan bo'lsa, hech narsa qilma
-    if current_step == last_step and context.user_data.get("back_pressed", False):
-        return
-
-    # Orqaga bosildi, flagni True qilamiz va last_step ni hozirgi stepga tenglaymiz
-    context.user_data["back_pressed"] = True
-    context.user_data["last_step"] = current_step
-
-    if current_step == "choose_time":
+    if step == "choose_time":
         context.user_data["step"] = "choose_date"
         await choose_date(update, context)
-    elif current_step == "choose_date":
+    elif step == "choose_date":
         context.user_data["step"] = "choose_service"
         await choose_service(update, context)
     else:

@@ -51,7 +51,7 @@ def save_booking_to_csv(user_id, service, date, time):
 
 def get_main_menu():
     return ReplyKeyboardMarkup(
-        [["/book"], ["/cabinet"], ["/cancel"], ["/admin"], ["/referal"], ["/cashback"],
+        [["/xizmat"], ["/shaxsiy_kabinet"], ["/bekor_qilish"], ["/admin"], ["/referal"], ["/cashback"],
          ["/instagram", "/telegram"], ["📍 Google manzil"], ["/help"], ["📋 Xizmat turlari"]],
         resize_keyboard=True
     )
@@ -91,7 +91,7 @@ async def google_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_location(latitude=41.306167, longitude=69.236028)
     text = (
         "📍 <b>Barber Shaxzod manzili:</b>\n\n"
-        "🗺 <a href='https://maps.app.goo.gl/EZZvuDih8tEKBWEu5'>Google xaritada ko‘rish</a>\n"
+        "🗺 <a href='https://maps.app.goo.gl/t7kZWzoud69F7VLY6'>Google xaritada ko‘rish</a>\n"
         "🏙 Toshkent, Sergeli tumani, Xiyobon ko‘chasi, 25-uy\n"
         "🕘 Ish vaqti: 09:00 - 21:00"
     )

@@ -177,16 +177,28 @@ async def shaxsiy_kabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     booking = user_bookings.get(user_id)
     cashback = cashback_data.get(str(user_id), 0)
-    invited = len(referrals_data.get(str(user_id), []))
-    referal_link = f"https://t.me/{context.bot.username}?start={user_id}"
-    text = (
-        f"👤 Shaxsiy kabinet:\n"
-        f"📋 Bandlov: {booking['service']} - {booking['date']} {booking['time']}" if booking and not booking.get("cancelled") else "📋 Bandlov yo‘q.\n"
-        f"💰 Cashback: {cashback} so'm\n"
-        f"👥 Takliflar: {invited} ta\n"
-        f"🔗 Referal havola: {referal_link}"
+    invites = len(referrals_data.get(str(user_id), []))
+    referral_link = f"https://t.me/{context.bot.username}?start={user_id}"
+
+    if booking and not booking.get("cancelled"):
+        booking_info = (
+            f"📋 Bandlov ma'lumotlari:\n"
+            f"• Xizmat: {booking['service']}\n"
+            f"• Sana: {booking['date']}\n"
+            f"• Vaqt: {booking['time']}\n\n"
+        )
+    else:
+        booking_info = "📋 Bandlov mavjud emas.\n\n"
+
+    message = (
+        "👤 <b>Shaxsiy kabinet</b>\n\n"
+        f"{booking_info}"
+        f"💰 <b>Cashback:</b> {cashback} so'm\n"
+        f"👥 <b>Taklif qilganlar:</b> {invites} ta\n"
+        f"🔗 <b>Referal havola:</b>\n<code>{referral_link}</code>"
     )
-    await update.message.reply_text(text)
+
+    await update.message.reply_text(message, parse_mode="HTML")
 
 async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     step = context.user_data.get("step")

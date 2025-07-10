@@ -227,13 +227,24 @@ async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if step == "choose_time":
         context.user_data["step"] = "choose_date"
-        await choose_date(update, context)
+        buttons = [[d] for d in get_next_dates()]
+        await update.message.reply_text(
+            "📅 Iltimos, sanani tanlang:",
+            reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True)
+        )
+
     elif step == "choose_date":
         context.user_data["step"] = "choose_service"
-        await choose_service(update, context)
+        buttons = [[s] for s in services]
+        await update.message.reply_text(
+            "📋 Iltimos, xizmat turini tanlang:",
+            reply_markup=ReplyKeyboardMarkup(buttons + [["🔙 Orqaga / Назад"]], resize_keyboard=True)
+        )
+
     else:
         context.user_data.clear()
-        await start(update, context)
+        await update.message.reply_text("🏠 Asosiy menyuga qaytdingiz.", reply_markup=get_main_menu())
+
 
 if __name__ == '__main__':
     app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()

@@ -236,7 +236,7 @@ async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await start(update, context)
 
 if __name__ == '__main__':
-    app = ApplicationBuilder().token("YOUR_BOT_TOKEN").build()
+    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("book", book))

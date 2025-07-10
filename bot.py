@@ -179,7 +179,7 @@ async def schedule_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         text=f"⏰ Eslatma: Siz bugun soat {time_str} da bandlovingiz bor. Iltimos, vaqtida yetib keling!"
     )
 
-async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def bekor_qilish(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     booking = user_bookings.get(user_id)
     if booking:
@@ -252,7 +252,7 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("xizmat", xizmat))
     app.add_handler(CommandHandler("shaxsiy_kabinet", shaxsiy_kabinet))
-    app.add_handler(CommandHandler("cancel", cancel_booking))
+    app.add_handler(CommandHandler("bekor_qilish", bekor_qilish))
     app.add_handler(CommandHandler("admin", admin))
     app.add_handler(CommandHandler("cashback", referal))  # cashback hali referal funksiyasidan foydalanmoqda
     app.add_handler(CommandHandler("location", google_location))

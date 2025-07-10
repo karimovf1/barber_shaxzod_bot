@@ -197,7 +197,7 @@ async def cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Sizda bandlov mavjud emas.")
 
-async def cabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def shaxsiy_kabinet (update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     booking = user_bookings.get(user_id)
     booking_info = f"📋 {booking['service']}\n📅 {booking['date']}\n🕒 {booking['time']}" if booking and not booking.get("cancelled") else "Bandlov mavjud emas."
@@ -251,7 +251,7 @@ if __name__ == '__main__':
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("xizmat", xizmat))
-    app.add_handler(CommandHandler("cabinet", cabinet))
+    app.add_handler(CommandHandler("shaxsiy_kabinet", shaxsiy_kabinet))
     app.add_handler(CommandHandler("cancel", cancel_booking))
     app.add_handler(CommandHandler("admin", admin))
     app.add_handler(CommandHandler("cashback", referal))  # cashback hali referal funksiyasidan foydalanmoqda

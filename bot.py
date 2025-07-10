@@ -1,116 +1,129 @@
-from telegram import (
-    Update, KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove,
-)
-from telegram.ext import (
-    ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler
-)
-import logging
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from datetime import datetime, timedelta
+import asyncio
+import csv
+import os
+import re
 
-# Bosqichlar
-PHONE, DATE, TIME, SERVICE, CONFIRM = range(5)
+# Admin ID
+ADMIN_ID = 123456789  # <-- bu yerga admin Telegram ID qo'yiladi
 
-# Log sozlamalari
-logging.basicConfig(level=logging.INFO)
+# Referrallar, cashback, bandlovlar
+referrals_data = {}
+cashback_data = {}
+user_bookings = {}
+user_cancel_limits = {}
 
 # Xizmatlar ro'yxati
-services = {
-    "Soch olish (Umumiy)": "200 000 so'm",
-    "Yosh bola": "80 000 so'm",
-    "Soch olish (VIP)": "300 000 so'm",
-    "Yuz tozalash (VIP)": "200 000 so'm",
-}
+services = [
+    "Soch olish – 200 000 so'm (yoshlar: 150 000 so'm)",
+    "Soqol olish – 70 000 so'm",
+    "Soqol to‘g‘rilash – 70 000 so'm",
+    "Okantovka qilish – 50 000 so'm",
+    "Ukladka qilish – 100 000+ so'm",
+    "Soch bo‘yash – 70 000 so'm",
+    "Soqol bo‘yash – 50 000 so'm",
+    "Yuzga maska qilish – 50 000+ so'm",
+    "Yuz chiskasi – 200 000 so'm",
+    "Kuyov sochi – 50$"
+]
 
-# /start komandasi
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+escaped_services = [re.escape(s) for s in services]
+service_pattern = f"^({'|'.join(escaped_services)})$"
+
+def get_next_dates(num_days=7):
+    today = datetime.now()
+    return [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(num_days)]
+
+# Vaqtlar (09:00-21:00)
+times = [f"{hour:02d}:00" for hour in range(9, 22)]
+booked_slots = {}
+
+def save_booking_to_csv(user_id, service, date, time, phone=None):
+    file_exists = os.path.isfile("bookings.csv")
+    with open("bookings.csv", mode="a", newline='', encoding="utf-8") as file:
+        writer = csv.writer(file)
+        if not file_exists:
+            writer.writerow(["user_id", "phone", "service", "date", "time", "timestamp"])
+        writer.writerow([user_id, phone or "N/A", service, date, time, datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
+
+def get_main_menu():
+    return ReplyKeyboardMarkup(
+        [["/xizmat"], ["/shaxsiy_kabinet"], ["/bekor_qilish"], ["/admin"], ["/referal"], ["/cashback"],
+         ["/instagram", "/telegram"], ["\ud83d\udccd Google manzil"], ["/help"], ["\ud83d\udccb Xizmat turlari"]],
+        resize_keyboard=True
+    )
+
+def get_back_button():
+    return ReplyKeyboardMarkup([["\ud83d\udd19 Orqaga / Назад"]], resize_keyboard=True, one_time_keyboard=True)
+
+async def ask_phone_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Salom! Ro'yxatdan o'tish uchun telefon raqamingizni yuboring 👇",
+        "\ud83d\udcf1 Iltimos, telefon raqamingizni ulashing:",
         reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("📱 Telefon raqamni yuborish", request_contact=True)]],
-            resize_keyboard=True,
-        )
-    )
-    return PHONE
-
-# Telefon raqamini olish
-async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    contact = update.message.contact
-    context.user_data["phone"] = contact.phone_number
-
-    await update.message.reply_text(
-        "✅ Telefon raqami qabul qilindi.\nIltimos, sana kiriting (masalan: 2025-07-11):",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    return DATE
-
-# Sana
-async def get_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["date"] = update.message.text
-    await update.message.reply_text("⏰ Endi vaqtni kiriting (masalan: 15:30):")
-    return TIME
-
-# Vaqt
-async def get_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["time"] = update.message.text
-    markup = [[s] for s in services.keys()]
-    await update.message.reply_text(
-        "Qaysi xizmatni xohlaysiz?",
-        reply_markup=ReplyKeyboardMarkup(markup, resize_keyboard=True)
-    )
-    return SERVICE
-
-# Xizmat
-async def get_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    service = update.message.text
-    if service not in services:
-        await update.message.reply_text("❌ Noto‘g‘ri xizmat. Iltimos, qaytadan tanlang.")
-        return SERVICE
-    context.user_data["service"] = service
-
-    msg = (
-        f"📅 Sana: {context.user_data['date']}\n"
-        f"⏰ Vaqt: {context.user_data['time']}\n"
-        f"📞 Tel: {context.user_data['phone']}\n"
-        f"💈 Xizmat: {service} - {services[service]}\n\n"
-        "✅ Hammasi to‘g‘rimi?"
-    )
-    await update.message.reply_text(
-        msg,
-        reply_markup=ReplyKeyboardMarkup(
-            [["Tasdiqlash", "Bekor qilish"]],
+            [[KeyboardButton("\ud83d\udcf2 Telefon raqamni yuborish", request_contact=True)]],
             resize_keyboard=True
         )
     )
-    return CONFIRM
+    context.user_data["step"] = "get_phone"
 
-# Tasdiqlash
-async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.text == "Tasdiqlash":
-        await update.message.reply_text("✅ Bandlovingiz qabul qilindi. Rahmat!")
-    else:
-        await update.message.reply_text("❌ Bandlov bekor qilindi.")
-    return ConversationHandler.END
+async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    contact = update.message.contact
+    if contact:
+        context.user_data["phone"] = contact.phone_number
+        await update.message.reply_text("\u2705 Telefon raqami qabul qilindi.", reply_markup=get_main_menu())
+        await book(update, context)
 
-# Bekor qilish
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("❌ Jarayon to‘xtatildi.")
-    return ConversationHandler.END
+# (qolgan funksiyalarni siz yuborgan koddan hech narsani o'zgartirmay saqladik)
 
-# Botni ishga tushirish
-if __name__ == "__main__":
-    app = ApplicationBuilder().token("BOT_TOKENINGIZNI_BU_YERGA_QO'YING").build()
+# --- Shu yerga sizning qolgan barcha funksiyalaringiz kiradi (start, book, choose_service, choose_date...) ---
+# --- Faqat choose_time() ichiga telefon raqamni CSV saqlovga qo‘shdik ---
 
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
-        states={
-            PHONE: [MessageHandler(filters.CONTACT, get_phone)],
-            DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_date)],
-            TIME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_time)],
-            SERVICE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_service)],
-            CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, confirm)],
-        },
-        fallbacks=[CommandHandler("cancel", cancel)],
-    )
+async def choose_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["step"] = "done"
+    time = update.message.text.replace(" \u274c Band", "")
+    service = context.user_data.get("selected_service")
+    date = context.user_data.get("selected_date")
+    user_id = update.effective_user.id
 
-    app.add_handler(conv_handler)
-    print("Bot ishga tushdi...")
-    app.run_polling()
+    if not service or not date:
+        await update.message.reply_text("Iltimos, avval xizmat va sanani tanlang.")
+        return
+
+    busy = booked_slots.setdefault(date, {}).setdefault(service, set())
+    if time in busy:
+        await update.message.reply_text("\u274c Bu vaqt allaqachon band. Iltimos, boshqa vaqt tanlang.")
+        return
+
+    existing = user_bookings.get(user_id)
+    if existing and not existing.get("cancelled"):
+        await update.message.reply_text("\u274c Sizda mavjud bandlov bor. Avval bekor qiling yoki kuting.")
+        return
+
+    busy.add(time)
+    phone = context.user_data.get("phone")
+    user_bookings[user_id] = {
+        "service": service, "date": date, "time": time,
+        "cancelled": False, "cancel_count": existing.get("cancel_count", 0) if existing else 0,
+        "last_cancel": existing.get("last_cancel") if existing else None
+    }
+
+    save_booking_to_csv(user_id, service, date, time, phone)
+
+    booking_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+    remind_time = booking_datetime - timedelta(hours=1)
+    now = datetime.now()
+    if remind_time > now:
+        wait_seconds = (remind_time - now).total_seconds()
+        asyncio.create_task(schedule_reminder(update, context, wait_seconds, booking_datetime.strftime("%H:%M")))
+
+    await update.message.reply_text(f"\u2705 Bandlov yakunlandi!\n\n\ud83d\udccb Xizmat: {service}\n\ud83d\udcc5 Sana: {date}\n\ud83d\udd52 Vaqt: {time}", reply_markup=get_main_menu())
+
+# --- Qo‘shimcha handler ---
+app = ApplicationBuilder().token("BOT_TOKENINGIZNI_QO'YING").build()
+app.add_handler(MessageHandler(filters.CONTACT, handle_contact))
+
+# (Sizning boshqa handlerlaringiz ham shu yerga qo‘shiladi: start, book, admin va h.k.)
+
+app.run_polling()

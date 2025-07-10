@@ -100,7 +100,7 @@ async def google_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("ℹ️ Yordam: Har qanday savol uchun admin bilan bog‘laning yoki /start buyrug‘ini bosing.")
 
-async def book(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def xizmat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
     context.user_data["step"] = "choose_service"
     buttons = [[s] for s in services]

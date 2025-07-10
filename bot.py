@@ -98,7 +98,10 @@ async def google_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode="HTML", disable_web_page_preview=True)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("ℹ️ Yordam: Har qanday savol uchun admin bilan bog‘laning yoki /start buyrug‘ini bosing.")
+    await update.message.reply_text(
+        "ℹ️ Yordam kerakmi?\nSavollar bo‘yicha admin bilan bog‘laning:\n👉 @barber_shaxzod"
+    )
+)
 
 async def xizmat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()

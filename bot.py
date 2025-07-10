@@ -230,7 +230,7 @@ async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("🏠 Asosiy menyuga qaytdingiz.", reply_markup=get_main_menu())
 
 if __name__ == '__main__':
-    app = ApplicationBuilder().token("TOKENINGIZ").build()
+   app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("xizmat", xizmat))

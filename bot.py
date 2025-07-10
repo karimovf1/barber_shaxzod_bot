@@ -239,7 +239,7 @@ if __name__ == '__main__':
     app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("book", book))
+    app.add_handler(CommandHandler("xizmat", xizmat))
     app.add_handler(CommandHandler("cabinet", cabinet))
     app.add_handler(CommandHandler("cancel", cancel_booking))
     app.add_handler(CommandHandler("admin", admin))

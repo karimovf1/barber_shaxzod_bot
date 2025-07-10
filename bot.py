@@ -88,6 +88,13 @@ async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def google_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_location(latitude=41.306167, longitude=69.236028)
+    text = (
+        "📍 <b>Barber Shaxzod manzili:</b>\n\n"
+        "🗺 <a href='https://maps.app.goo.gl/rSNBiU5V4uxBsCgB9'>Google xaritada ko‘rish</a>\n"
+        "🏙 Bunyodkor shoh ko'chasi 8Д, 100097, Тоshkent,"
+        "🕘 Ish vaqti: 09:00 - 21:00"
+    )
+    await update.message.reply_text(text, parse_mode="HTML", disable_web_page_preview=True)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("ℹ️ Yordam uchun admin bilan bog‘laning: @barber_shaxzod")

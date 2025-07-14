@@ -71,6 +71,33 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await update.message.reply_text(text, parse_mode="HTML")
 
+
+async def xizmat(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📋 Xizmatlar ro'yxati:\n1. Soch olish\n2. Soqol olish\n...")
+
+async def shaxsiy_kabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("👤 Bu sizning shaxsiy kabinetingiz.")
+
+async def bekor_qilish(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📅 Bandlov bekor qilindi.")
+
+async def cashback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("💰 Sizning cashback balansingiz: 0 so'm.")
+
+async def instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📸 Instagram: https://www.instagram.com/barber_shaxzod")
+
+async def telegram(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📲 Telegram: https://t.me/barbershaxzod")
+
+async def location(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_location(latitude=41.306167, longitude=69.236028)
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("ℹ️ Yordam uchun admin: @barber_shaxzod")
+
+
+
 # Qolgan komandalar (shaxsiy kabinet, cashback, xizmatlar, band qilish, bekor qilish va h.k.)
 # Qisqartirilgan: shu yerga sening mavjud funksiyalaringni to'g'ridan-to'g'ri qo'shamiz
 # Bu yerda faqat interfeys uchun asosiy o'zgarishlar berilgan
@@ -79,6 +106,15 @@ if __name__ == "__main__":
     app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("xizmat", xizmat))
+    app.add_handler(CommandHandler("shaxsiy_kabinet", shaxsiy_kabinet))
+    app.add_handler(CommandHandler("bekor_qilish", bekor_qilish))
+    app.add_handler(CommandHandler("cashback", cashback))
+    app.add_handler(CommandHandler("instagram", instagram))
+    app.add_handler(CommandHandler("telegram", telegram))
+    app.add_handler(CommandHandler("location", location))
+    app.add_handler(CommandHandler("help", help_command))
+
     # Qolgan komandalarni shu yerga joylashtirasiz:
     # /xizmat, /shaxsiy_kabinet, /bekor_qilish, /cashback, /telegram, /instagram, /location, /help
 

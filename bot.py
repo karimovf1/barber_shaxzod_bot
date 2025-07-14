@@ -1,9 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
-TOKEN = "8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus"
-
-# /start komandasi uchun tugmali interfeys
+# /start komandasi — inline menyu chiqaradi
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("✂️ Xizmatlar", callback_data="xizmat")],
@@ -14,11 +12,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📲 Telegram", callback_data="telegram")],
         [InlineKeyboardButton("ℹ️ Yordam", callback_data="help")]
     ]
-
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Asosiy menyu:", reply_markup=reply_markup)
 
-# Callback tugmalarni qayta ishlash
+    await update.message.reply_text(
+        "Assalomu alaykum, <b>Barber Shaxzod</b> botiga xush kelibsiz!\n\nQuyidagilardan birini tanlang 👇",
+        parse_mode="HTML",
+        reply_markup=reply_markup
+    )
+
+# Inline tugmalar bosilganda ishlovchi funksiya
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -26,28 +28,27 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = query.data
 
     if data == "xizmat":
-        await query.edit_message_text("📋 Xizmatlar ro'yxati: (bu yerga xizmatlar qo‘shiladi)")
+        await query.edit_message_text("📋 Xizmatlar ro'yxati (bu yerga xizmatlar qo‘shiladi)")
     elif data == "kabinet":
-        await query.edit_message_text("👤 Shaxsiy kabinet: (keyinchalik bu yerga ma’lumot chiqadi)")
+        await query.edit_message_text("👤 Shaxsiy kabinet (keyinchalik ma’lumotlar bilan to‘ldiriladi)")
     elif data == "bekor":
-        await query.edit_message_text("❌ Bandlovni bekor qilish: (bandlov bo‘lsa bekor qilinadi)")
+        await query.edit_message_text("❌ Bandlov bekor qilish (hali ishlanmoqda)")
     elif data == "location":
-        await query.edit_message_text("📍 Lokatsiya: https://maps.app.goo.gl/rSNBiU5V4uxBsCgB9")
+        await query.edit_message_location(latitude=41.306167, longitude=69.236028)
     elif data == "instagram":
-        await query.edit_message_text("📸 Instagram: https://www.instagram.com/barber_shaxzod")
+        await query.edit_message_text("📸 Instagram sahifamiz:\nhttps://www.instagram.com/barber_shaxzod")
     elif data == "telegram":
-        await query.edit_message_text("📲 Telegram: https://t.me/barbershaxzod")
+        await query.edit_message_text("📲 Telegram sahifamiz:\nhttps://t.me/barbershaxzod")
     elif data == "help":
-        await query.edit_message_text("ℹ️ Yordam uchun admin bilan bog‘laning: @barber_shaxzod")
+        await query.edit_message_text("ℹ️ Yordam uchun admin: @barber_shaxzod")
     else:
         await query.edit_message_text("❓ Noma’lum tanlov.")
 
-# Asosiy ishga tushirish
+# Botni ishga tushirish
 if __name__ == "__main__":
-    app = ApplicationBuilder().token(TOKEN).build()
+    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
 
-    print("✅ Bot ishga tushdi...")
     app.run_polling()

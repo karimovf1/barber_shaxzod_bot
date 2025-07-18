@@ -9,9 +9,7 @@ import re
 # Admin ID
 ADMIN_ID = 123456789  # <-- bu yerga admin Telegram ID qo'yiladi
 
-# Referrallar, cashback, bandlovlar
-referrals_data = {}
-cashback_data = {}
+# Bandlovlar
 user_bookings = {}
 user_cancel_limits = {}
 
@@ -51,7 +49,7 @@ def get_main_menu():
     return ReplyKeyboardMarkup(
         [
             ["✂️ Xizmatlar", "👤 Kabinet"],
-            ["📅 Bandlovni bekor qilish", "🎁 Cashback"],
+            ["📅 Bandlovni bekor qilish"],
             ["📸 Instagram", "📲 Telegram"],
             ["📍 Lokatsiya", "ℹ️ Yordam"]
         ],
@@ -59,25 +57,9 @@ def get_main_menu():
     )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    if args:
-        referrer_id = args[0]
-        user_id = str(update.effective_user.id)
-        if user_id != referrer_id:
-            referrals_data.setdefault(referrer_id, set()).add(user_id)
-            cashback_data[referrer_id] = cashback_data.get(referrer_id, 0) + 5000
     await update.message.reply_text(
         "Assalomu alaykum, 'Barber Shaxzod' botiga xush kelibsiz!\nQuyidagilardan birini tanlang 👇",
         reply_markup=get_main_menu()
-    )
-
-async def referal(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-    referral_link = f"https://t.me/{context.bot.username}?start={user_id}"
-    invited_count = len(referrals_data.get(user_id, []))
-    cashback = cashback_data.get(user_id, 0)
-    await update.message.reply_text(
-        f"🔗 Sizning taklif havolangiz: {referral_link}\n👥 Taklif qilgan do‘stlaringiz soni: {invited_count} ta\n💰 Cashback: {cashback} so'm"
     )
 
 async def telegram(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -91,7 +73,7 @@ async def google_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         "📍 <b>Barber Shaxzod manzili:</b>\n\n"
         "🗺 <a href='https://maps.app.goo.gl/rSNBiU5V4uxBsCgB9'>Google xaritada ko‘rish</a>\n"
-        "🏙 Bunyodkor shoh ko'chasi 8Д, 100097, Тоshkent,"
+        "🏙 Bunyodkor shoh ko'chasi 8Д, 100097, Тоshkent,\n"
         "🕘 Ish vaqti: 09:00 - 21:00"
     )
     await update.message.reply_text(text, parse_mode="HTML", disable_web_page_preview=True)
@@ -183,9 +165,6 @@ async def bekor_qilish(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def shaxsiy_kabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     booking = user_bookings.get(user_id)
-    cashback = cashback_data.get(str(user_id), 0)
-    invites = len(referrals_data.get(str(user_id), []))
-    referral_link = f"https://t.me/{context.bot.username}?start={user_id}"
 
     text = "<b>👤 Shaxsiy kabinet</b>\n"
     text += "━━━━━━━━━━━━━━━━━━\n"
@@ -200,19 +179,9 @@ async def shaxsiy_kabinet(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text += "• Hech qanday bandlov mavjud emas.\n"
 
     text += "━━━━━━━━━━━━━━━━━━\n"
-    text += "<b>💰 Cashback balansingiz:</b>\n"
-    text += f"• {cashback} so'm\n"
-
-    text += "━━━━━━━━━━━━━━━━━━\n"
-    text += "<b>👥 Taklif etganlar soni:</b>\n"
-    text += f"• {invites} ta\n"
-
-    text += "━━━━━━━━━━━━━━━━━━\n"
-    text += "<b>🔗 Referal havola:</b>\n"
-    text += f"<code>{referral_link}</code>"
+    text += "<b>💰 Cashback tizimi o‘chirib qo‘yilgan.</b>"
 
     await update.message.reply_text(text, parse_mode="HTML")
-
 
 async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     step = context.user_data.get("step")
@@ -229,13 +198,12 @@ async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("🏠 Asosiy menyu:", reply_markup=get_main_menu())
 
 if __name__ == "__main__":
-    app = ApplicationBuilder().token("8112474957:AAHAUjJwLGAku4RJZUKtlgQnB92EEsaIZus").build()
+    app = ApplicationBuilder().token("YOUR_BOT_TOKEN_HERE").build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("xizmat", xizmat))
     app.add_handler(CommandHandler("shaxsiy_kabinet", shaxsiy_kabinet))
     app.add_handler(CommandHandler("bekor_qilish", bekor_qilish))
-    app.add_handler(CommandHandler("cashback", referal))
     app.add_handler(CommandHandler("instagram", instagram))
     app.add_handler(CommandHandler("telegram", telegram))
     app.add_handler(CommandHandler("location", google_location))

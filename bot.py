@@ -15,6 +15,15 @@ cashback_data = {}
 user_bookings = {}
 user_cancel_limits = {}
 
+# Band qilish uchun yarim soatlik vaqtlar
+half_hour_times = [
+    "12:00", "12:30", "13:00", "13:30",
+    "14:00", "14:30", "15:00", "15:30",
+    "16:00", "16:30", "17:00", "17:30",
+    "18:00", "18:30", "19:00", "19:30",
+    "20:00", "20:30", "21:00", "21:30"
+]
+
 # Xizmatlar ro'yxati
 services = [
     "Soch olish – 200 000 so'm (yoshlar: 150 000 so'm)",
